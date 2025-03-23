@@ -1,13 +1,6 @@
 from typing import Any
 import numpy as np
 
-class Piece:
-    def __init__(self, y: float, slope: float, length: float) -> None:
-        assert length > 0
-        self.y = y
-        self.slope = slope
-        self.length = length
-
 
 class Point:
     def __init__(self, x, y) -> None:
