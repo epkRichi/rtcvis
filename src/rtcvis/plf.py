@@ -16,6 +16,9 @@ class Point:
 
 class PLF:
     def __init__(self, points: list[Point]) -> None:
+        assert len(points) >= 2
+        assert points[0].x == 0
+        assert all(points[i].x <= points[i+1].x for i in range(len(points) - 1))
         self.points = points
 
     def __repr__(self):
