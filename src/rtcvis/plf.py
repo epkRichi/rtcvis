@@ -8,7 +8,7 @@ class Point:
         self.y = y
 
     def __repr__(self):
-        return f"({self.x}, {self.y})"
+        return f"Point({self.x}, {self.y})"
     
     def __eq__(self, other):
         return type(other) is Point and other.x == self.x and other.y == self.y
@@ -22,7 +22,7 @@ class PLF:
         self.points = points
 
     def __repr__(self):
-        return f"[{', '.join([repr(point) for point in self.points])}]"
+        return f"PLF([{', '.join([repr(point) for point in self.points])}])"
     
     def __eq__(self, other):
         if type(other) is not PLF or len(self.points) != len(other.points):
