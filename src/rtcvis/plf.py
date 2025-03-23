@@ -9,7 +9,7 @@ class Point:
 
     def __repr__(self):
         return f"Point({self.x}, {self.y})"
-    
+
     def __eq__(self, other):
         return type(other) is Point and other.x == self.x and other.y == self.y
 
@@ -18,22 +18,22 @@ class PLF:
     def __init__(self, points: list[Point]) -> None:
         assert len(points) >= 2
         assert points[0].x == 0
-        assert all(points[i].x <= points[i+1].x for i in range(len(points) - 1))
+        assert all(points[i].x <= points[i + 1].x for i in range(len(points) - 1))
         self.points = points
 
     def __repr__(self):
         return f"PLF([{', '.join([repr(point) for point in self.points])}])"
-    
+
     def __eq__(self, other):
         if type(other) is not PLF or len(self.points) != len(other.points):
             return False
-        
+
         for a, b in zip(self.points, other.points):
             if a != b:
                 return False
-            
+
         return True
-            
+
     @classmethod
     def match(cls, a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
         new_a = [a.points[0]]
@@ -51,26 +51,45 @@ class PLF:
                 a_idx += 1
                 b_idx += 1
             elif a_x < b_x:
-                slope = (b.points[b_idx].y - new_b[-1].y) / (b.points[b_idx].x - new_b[-1].x)
+                slope = (b.points[b_idx].y - new_b[-1].y) / (
+                    b.points[b_idx].x - new_b[-1].x
+                )
                 segment_length = a.points[a_idx].x - new_b[-1].x
                 d_y = slope * segment_length
                 new_a.append(a.points[a_idx])
                 new_b.append(Point(a.points[a_idx].x, new_b[-1].y + d_y))
                 a_idx += 1
             else:
-                slope = (a.points[a_idx].y - new_a[-1].y) / (a.points[a_idx].x - new_a[-1].x)
+                slope = (a.points[a_idx].y - new_a[-1].y) / (
+                    a.points[a_idx].x - new_a[-1].x
+                )
                 segment_length = b.points[b_idx].x - new_a[-1].x
                 d_y = slope * segment_length
                 new_a.append(Point(b.points[b_idx].x, new_a[-1].y + d_y))
                 new_b.append(b.points[b_idx])
                 b_idx += 1
 
-            stop_a = (a_idx == len(a.points))
-            stop_b = (b_idx == len(b.points))
+            stop_a = a_idx == len(a.points)
+            stop_b = b_idx == len(b.points)
             if stop_a and stop_b:
                 break
-            
+
             if stop_a or stop_b:
                 raise RuntimeError("Reached one function's end before the other")
 
         return PLF(new_a), PLF(new_b)
+
+    # def matches(self, other: "PLF") -> bool:
+    #     return len(self.points) == len(other.points) and all(
+    #         p1.x == p2.x for p1, p2 in zip(self.points, other.points)
+    #     )
+
+    def __add__(self, other: "PLF") -> "PLF":
+        a, b = PLF.match(self, other)
+        new_points = [Point(p1.x, p1.y + p2.y) for p1, p2 in zip(a.points, b.points)]
+        return PLF(new_points)
+
+    def __sub__(self, other: "PLF") -> "PLF":
+        a, b = PLF.match(self, other)
+        new_points = [Point(p1.x, p1.y - p2.y) for p1, p2 in zip(a.points, b.points)]
+        return PLF(new_points)
