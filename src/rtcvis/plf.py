@@ -13,6 +13,16 @@ class Point:
     def __eq__(self, other):
         return type(other) is Point and other.x == self.x and other.y == self.y
 
+    @classmethod
+    def create_intersection(cls, a: "Point", b: "Point", x: float) -> "Point":
+        assert a.x != b.x
+        left, right = (a, b) if a.x < b.x else (b, a)
+
+        slope = (right.y - left.y) / (right.x - left.x)
+        segment_length = x - left.x
+        d_y = slope * segment_length
+        return Point(x, left.y + d_y)
+
 
 class PLF:
     def __init__(self, points: list[Point]) -> None:
@@ -36,6 +46,19 @@ class PLF:
 
     @classmethod
     def match(cls, a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
+        # if len(a.points) == 0 or len(b.points) == 0:
+        #     return PLF([])
+
+        # if len(a.points) == 1 and (
+        #     b.points[0] > a.points[0].x or b.points[-1] < a.points[0].x
+        # ):
+        #     return PLF([])
+
+        # if len(b.points) == 1 and (
+        #     a.points[0] > b.points[0].x or a.points[-1] < b.points[0].x
+        # ):
+        #     return PLF([])
+
         new_a = [a.points[0]]
         new_b = [b.points[0]]
         a_idx = 1
@@ -46,26 +69,19 @@ class PLF:
             b_x = b.points[b_idx].x
 
             if a_x == b_x:
+                # The points are already at the same x coordinate
                 new_a.append(a.points[a_idx])
                 new_b.append(b.points[b_idx])
                 a_idx += 1
                 b_idx += 1
             elif a_x < b_x:
-                slope = (b.points[b_idx].y - new_b[-1].y) / (
-                    b.points[b_idx].x - new_b[-1].x
-                )
-                segment_length = a.points[a_idx].x - new_b[-1].x
-                d_y = slope * segment_length
+                # Insert a new point for b
                 new_a.append(a.points[a_idx])
-                new_b.append(Point(a.points[a_idx].x, new_b[-1].y + d_y))
+                new_b.append(Point.create_intersection(b.points[b_idx], new_b[-1], a.points[a_idx].x))
                 a_idx += 1
             else:
-                slope = (a.points[a_idx].y - new_a[-1].y) / (
-                    a.points[a_idx].x - new_a[-1].x
-                )
-                segment_length = b.points[b_idx].x - new_a[-1].x
-                d_y = slope * segment_length
-                new_a.append(Point(b.points[b_idx].x, new_a[-1].y + d_y))
+                # Insert a new point for a
+                new_a.append(Point.create_intersection(a.points[a_idx], new_a[-1], b.points[b_idx].x))
                 new_b.append(b.points[b_idx])
                 b_idx += 1
 
@@ -79,11 +95,6 @@ class PLF:
 
         return PLF(new_a), PLF(new_b)
 
-    # def matches(self, other: "PLF") -> bool:
-    #     return len(self.points) == len(other.points) and all(
-    #         p1.x == p2.x for p1, p2 in zip(self.points, other.points)
-    #     )
-
     def __add__(self, other: "PLF") -> "PLF":
         a, b = PLF.match(self, other)
         new_points = [Point(p1.x, p1.y + p2.y) for p1, p2 in zip(a.points, b.points)]
@@ -93,7 +104,7 @@ class PLF:
         a, b = PLF.match(self, other)
         new_points = [Point(p1.x, p1.y - p2.y) for p1, p2 in zip(a.points, b.points)]
         return PLF(new_points)
-    
+
     def transformed(self, mirror: bool, offset: float) -> "PLF":
         """Creates a new PLF that is offset on the x-Axis and optionally mirrored on the y-Axis.
         Note that the function will first be mirrored and then offset. The function will also be
@@ -112,21 +123,13 @@ class PLF:
         points = iter(self.points) if mirror else reversed(self.points)
         for point in points:
             new_x = factor * point.x + offset
-            if new_x >= 0:
-                new_y = point.y
-            else:
-                assert len(new_points) > 0 # FIXME It should also be allowed to have a function that is defined by a single point
-                # new x would be smaller than 0 -> cut the function here and insert a new point at 0
-                prev_point = new_points[0]
-                slope = (prev_point.y - point.y) / (prev_point.x - new_x)
-                segment_length = prev_point.x
-                d_y = slope * segment_length
-                new_x = 0
-                new_y = prev_point.y - d_y
-
-            new_points.insert(0, Point(new_x, new_y))
-
-            if new_x == 0:
+            new_points.insert(0, Point(new_x, point.y))
+            if new_x < 0:
+                assert (
+                    len(new_points) > 1
+                )  # FIXME It should also be allowed to have a function that is defined by a single point
+                # new_x is smaller than 0 -> replace the point with the intersection at the y-axis
+                new_points[0] = Point.create_intersection(new_points[0], new_points[1], 0)
                 # we've reached x=0, stop here
                 break
 
