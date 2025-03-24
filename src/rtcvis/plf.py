@@ -93,3 +93,41 @@ class PLF:
         a, b = PLF.match(self, other)
         new_points = [Point(p1.x, p1.y - p2.y) for p1, p2 in zip(a.points, b.points)]
         return PLF(new_points)
+    
+    def transformed(self, mirror: bool, offset: float) -> "PLF":
+        """Creates a new PLF that is offset on the x-Axis and optionally mirrored on the y-Axis.
+        Note that the function will first be mirrored and then offset. The function will also be
+        truncated so that it doesn't contain any points at x<0.
+
+        Args:
+            mirror (bool): Whether the function should first be mirrored on the y-Axis.
+            offset (float): Amount which will be added to each point's x-coordinate.
+
+        Returns:
+            PLF: The transformed function.
+        """
+        new_points: list[Point] = []
+        factor = -1 if mirror else 1
+        # iterate over the points in the order in which they'll be in the transformed function
+        points = iter(self.points) if mirror else reversed(self.points)
+        for point in points:
+            new_x = factor * point.x + offset
+            if new_x >= 0:
+                new_y = point.y
+            else:
+                assert len(new_points) > 0 # FIXME It should also be allowed to have a function that is defined by a single point
+                # new x would be smaller than 0 -> cut the function here and insert a new point at 0
+                prev_point = new_points[0]
+                slope = (prev_point.y - point.y) / (prev_point.x - new_x)
+                segment_length = prev_point.x
+                d_y = slope * segment_length
+                new_x = 0
+                new_y = prev_point.y - d_y
+
+            new_points.insert(0, Point(new_x, new_y))
+
+            if new_x == 0:
+                # we've reached x=0, stop here
+                break
+
+        return PLF(new_points)
