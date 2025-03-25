@@ -3,14 +3,14 @@ import numpy as np
 
 
 class Point:
-    def __init__(self, x, y) -> None:
+    def __init__(self, x: float, y: float) -> None:
         self.x = x
         self.y = y
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Point({self.x}, {self.y})"
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return type(other) is Point and other.x == self.x and other.y == self.y
 
     @classmethod
@@ -37,18 +37,18 @@ class PLF:
             )
 
         if len(points) == 0:
-            self.x_start = 0
-            self.x_end = 0
+            self.x_start = 0.0
+            self.x_end = 0.0
         else:
             self.x_start = points[0].x
             self.x_end = points[-1].x
 
         self.points = points
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"PLF([{', '.join([repr(point) for point in self.points])}])"
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if type(other) is not PLF or len(self.points) != len(other.points):
             return False
 
