@@ -26,9 +26,13 @@ class Point:
 
 class PLF:
     def __init__(self, points: list[Point]) -> None:
-        assert len(points) >= 2
-        assert points[0].x == 0
-        assert all(points[i].x <= points[i + 1].x for i in range(len(points) - 1))
+        if len(points) > 1:
+            assert all(points[i].x <= points[i + 1].x for i in range(len(points) - 1))
+            self.x_start = points[0].x
+            self.x_end = points[-1].x
+        else:
+            self.x_start = 0
+            self.x_end = 0
         self.points = points
 
     def __repr__(self):
@@ -38,27 +42,48 @@ class PLF:
         if type(other) is not PLF or len(self.points) != len(other.points):
             return False
 
-        for a, b in zip(self.points, other.points):
-            if a != b:
-                return False
+        return all(a == b for a, b in zip(self.points, other.points))
 
-        return True
+    def trunc_start(self, x_start: float) -> "PLF":
+        if self.x_start >= x_start:
+            return self
+        
+        for idx, point in enumerate(self.points):
+            if point.x >= x_start:
+                points = []
+                if point.x > x_start:
+                    points = [Point.create_intersection(self.points[idx-1], self.points[idx], x_start)]
+                points += self.points[idx:]
+                return PLF(points)
+        return PLF([])
 
+    def trunc_end(self, x_end: float) -> "PLF":
+        if self.x_end <= x_end:
+            return self
+        
+        for idx, point in reversed(list(enumerate(self.points))):
+            if point.x <= x_end:
+                points = []
+                if point.x < x_end:
+                    points = [Point.create_intersection(self.points[idx+1], self.points[idx], x_end)]
+                points = self.points[:idx+1] + points
+                return PLF(points)
+        return PLF([])
+    
     @classmethod
     def match(cls, a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
-        # if len(a.points) == 0 or len(b.points) == 0:
-        #     return PLF([])
+        # Truncate the functions so they start/end at the same x coordinates
+        a = a.trunc_start(b.x_start).trunc_end(b.x_end)
+        b = b.trunc_start(a.x_start).trunc_end(a.x_end)
 
-        # if len(a.points) == 1 and (
-        #     b.points[0] > a.points[0].x or b.points[-1] < a.points[0].x
-        # ):
-        #     return PLF([])
+        if len(a.points) <= 1:
+            # If either function now has at most 1 point, the other function will
+            # already have the same number of points and they'll be at the same
+            # x coordinates, so we can stop here
+            return a, b
 
-        # if len(b.points) == 1 and (
-        #     a.points[0] > b.points[0].x or a.points[-1] < b.points[0].x
-        # ):
-        #     return PLF([])
-
+        # both functions have at least 2 points
+        # Note that even if one has exactly 2 points, the other one might have more than that
         new_a = [a.points[0]]
         new_b = [b.points[0]]
         a_idx = 1
@@ -77,11 +102,19 @@ class PLF:
             elif a_x < b_x:
                 # Insert a new point for b
                 new_a.append(a.points[a_idx])
-                new_b.append(Point.create_intersection(b.points[b_idx], new_b[-1], a.points[a_idx].x))
+                new_b.append(
+                    Point.create_intersection(
+                        b.points[b_idx], new_b[-1], a.points[a_idx].x
+                    )
+                )
                 a_idx += 1
             else:
                 # Insert a new point for a
-                new_a.append(Point.create_intersection(a.points[a_idx], new_a[-1], b.points[b_idx].x))
+                new_a.append(
+                    Point.create_intersection(
+                        a.points[a_idx], new_a[-1], b.points[b_idx].x
+                    )
+                )
                 new_b.append(b.points[b_idx])
                 b_idx += 1
 
@@ -107,8 +140,7 @@ class PLF:
 
     def transformed(self, mirror: bool, offset: float) -> "PLF":
         """Creates a new PLF that is offset on the x-Axis and optionally mirrored on the y-Axis.
-        Note that the function will first be mirrored and then offset. The function will also be
-        truncated so that it doesn't contain any points at x<0.
+        Note that the function will first be mirrored and then offset.
 
         Args:
             mirror (bool): Whether the function should first be mirrored on the y-Axis.
@@ -124,13 +156,5 @@ class PLF:
         for point in points:
             new_x = factor * point.x + offset
             new_points.insert(0, Point(new_x, point.y))
-            if new_x < 0:
-                assert (
-                    len(new_points) > 1
-                )  # FIXME It should also be allowed to have a function that is defined by a single point
-                # new_x is smaller than 0 -> replace the point with the intersection at the y-axis
-                new_points[0] = Point.create_intersection(new_points[0], new_points[1], 0)
-                # we've reached x=0, stop here
-                break
 
         return PLF(new_points)
