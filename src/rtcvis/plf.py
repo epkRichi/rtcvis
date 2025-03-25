@@ -27,12 +27,22 @@ class Point:
 class PLF:
     def __init__(self, points: list[Point]) -> None:
         if len(points) > 1:
+            # the points have to be given with ascending x coordinates
             assert all(points[i].x <= points[i + 1].x for i in range(len(points) - 1))
-            self.x_start = points[0].x
-            self.x_end = points[-1].x
-        else:
+        if len(points) > 2:
+            # there can be at most 2 points at the same x coordinate
+            assert all(
+                (points[i].x != points[i + 1].x) or (points[i + 1].x != points[i + 2].x)
+                for i in range(len(points) - 2)
+            )
+
+        if len(points) == 0:
             self.x_start = 0
             self.x_end = 0
+        else:
+            self.x_start = points[0].x
+            self.x_end = points[-1].x
+
         self.points = points
 
     def __repr__(self):
@@ -47,12 +57,16 @@ class PLF:
     def trunc_start(self, x_start: float) -> "PLF":
         if self.x_start >= x_start:
             return self
-        
+
         for idx, point in enumerate(self.points):
             if point.x >= x_start:
                 points = []
                 if point.x > x_start:
-                    points = [Point.create_intersection(self.points[idx-1], self.points[idx], x_start)]
+                    points = [
+                        Point.create_intersection(
+                            self.points[idx - 1], self.points[idx], x_start
+                        )
+                    ]
                 points += self.points[idx:]
                 return PLF(points)
         return PLF([])
@@ -60,18 +74,25 @@ class PLF:
     def trunc_end(self, x_end: float) -> "PLF":
         if self.x_end <= x_end:
             return self
-        
+
         for idx, point in reversed(list(enumerate(self.points))):
             if point.x <= x_end:
                 points = []
                 if point.x < x_end:
-                    points = [Point.create_intersection(self.points[idx+1], self.points[idx], x_end)]
-                points = self.points[:idx+1] + points
+                    points = [
+                        Point.create_intersection(
+                            self.points[idx + 1], self.points[idx], x_end
+                        )
+                    ]
+                points = self.points[: idx + 1] + points
                 return PLF(points)
         return PLF([])
-    
+
     @classmethod
     def match(cls, a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
+        if len(a.points) == 0 or len(b.points) == 0:
+            return PLF([]), PLF([])
+
         # Truncate the functions so they start/end at the same x coordinates
         a = a.trunc_start(b.x_start).trunc_end(b.x_end)
         b = b.trunc_start(a.x_start).trunc_end(a.x_end)
