@@ -1,6 +1,7 @@
 from rtcvis.plf import Point, PLF
 import pytest
 
+
 def test_1():
     # check that these don't raise any exceptions
     PLF([])

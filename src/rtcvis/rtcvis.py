@@ -13,13 +13,7 @@ def show_min_plus(a, b):
 
     # Create bottom slider
     axdeltax = fig.add_axes([0.25, 0.1, 0.65, 0.03])
-    deltax_slider = Slider(
-        ax=axdeltax,
-        label="delta_x",
-        valmin=0,
-        valmax=10,
-        valinit=0
-    )
+    deltax_slider = Slider(ax=axdeltax, label="delta_x", valmin=0, valmax=10, valinit=0)
 
     # compute the x values
     sampling_rate = 100
@@ -31,20 +25,20 @@ def show_min_plus(a, b):
 
     # plot function b
     y_b = b(x)
-    graph_b, = ax.plot(-x, y_b)
+    (graph_b,) = ax.plot(-x, y_b)
 
     initial_sum = y_a[0] + y_b[0]
 
     # plot sum of a and b
-    graph_sum, = ax.plot([0], initial_sum)
+    (graph_sum,) = ax.plot([0], initial_sum)
 
     # add marker for minconv result
-    graph_marker, = ax.plot([0], initial_sum, marker="s")
+    (graph_marker,) = ax.plot([0], initial_sum, marker="s")
 
     # Slider update function
     def update(val):
         # Compute result of minconv
-        delta_idx = int(sampling_rate * val) + 1 # +1 to prevent empty frames
+        delta_idx = int(sampling_rate * val) + 1  # +1 to prevent empty frames
         a_frame = y_a[:delta_idx]
         b_frame = np.flip(y_b[:delta_idx])
         sum_frame = a_frame + b_frame
@@ -61,7 +55,7 @@ def show_min_plus(a, b):
         graph_marker.set_ydata([min_y])
 
         # Update function b
-        graph_b.set_xdata(-x+val)
+        graph_b.set_xdata(-x + val)
         fig.canvas.draw_idle()
 
     # register the slider
@@ -73,11 +67,14 @@ def show_min_plus(a, b):
 def a(x):
     return x
 
+
 def b(x):
     return x + 1
 
+
 def main():
     show_min_plus(a, b)
+
 
 if __name__ == "__main__":
     main()
