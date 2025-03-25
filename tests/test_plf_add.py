@@ -18,3 +18,8 @@ def test_3():
 def test_4():
     a = PLF([Point(0, 2), Point(2, 0), Point(5, 1), Point(8, -2)])
     assert a + a == PLF([Point(0, 4), Point(2, 0), Point(5, 2), Point(8, -4)])
+
+def test_5():
+    a = PLF([Point(-1, 0), Point(1, 2)])
+    b = PLF([Point(-1, 0), Point(0, 0), Point(0, 1), Point(1, 1)])
+    assert a + b == PLF([Point(-1, 0), Point(0, 1), Point(0, 2), Point(1, 3)])
