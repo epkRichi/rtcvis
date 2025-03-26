@@ -38,3 +38,14 @@ def test_min_plus_conv_2():
     assert min_plus_conv(a, b, 11)[1] == 2 + 3.5 * (9 / 7) + 1 * (9 / 5)
     assert min_plus_conv(a, b, 12)[1] == 2 + 3.5 * (9 / 7) + 2 * (9 / 5)
     assert min_plus_conv(a, b, 12.5)[1] == 2 + 3.5 * (9 / 7) + 2.5 * (9 / 5)
+
+
+def test_min_plus_deconv_1():
+    a = PLF([Point(0, 2), Point(12, 5)])  # slope 0.25
+    b = PLF(
+        [Point(0, 0), Point(1, 0), Point(2, 1), Point(3, 1), Point(4, 2), Point(5, 2)]
+    )
+    assert min_plus_deconv(a, b, 0)[1] == 2.25
+    assert min_plus_deconv(a, b, 1)[1] == 2.5
+    assert min_plus_deconv(a, b, 2)[1] == 2.75
+    assert min_plus_deconv(a, b, 3)[1] == 3
