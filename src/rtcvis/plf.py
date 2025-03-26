@@ -21,14 +21,18 @@ class PLF:
                 for i in range(len(points) - 2)
             )
 
+        self._points = tuple(points)
+
         if len(points) == 0:
             self._x_start = 0.0
             self._x_end = 0.0
+            self._min = 0.0
+            self._max = 0.0
         else:
             self._x_start = points[0].x
             self._x_end = points[-1].x
-
-        self._points = tuple(points)
+            self._min = min(point.y for point in self.points)
+            self._max = max(point.y for point in self.points)
 
     @property
     def x_start(self):
@@ -41,6 +45,14 @@ class PLF:
     @property
     def points(self):
         return self._points
+
+    @property
+    def min(self):
+        return self._min
+
+    @property
+    def max(self):
+        return self._max
 
     def __repr__(self) -> str:
         return f"PLF([{', '.join([repr(point) for point in self.points])}])"
