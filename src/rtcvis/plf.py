@@ -166,6 +166,27 @@ class PLF:
 
         return PLF(new_points)
 
+    def get_value(self, x: float) -> float:
+        """Computes and returns the value of this PLF at the given x.
+
+        Args:
+            x (float): x coordinate
+
+        Returns:
+            float: The result
+        """
+        assert len(self.points) > 0 and x >= self.x_start and x <= self.x_end
+        for idx, p in enumerate(self.points):
+            if p.x == x:
+                return p.y
+            elif p.x > x:
+                return point_on_line(self.points[idx - 1], self.points[idx], x).y
+        raise RuntimeError("Did not find points with corresponding x coordinates")
+
+    def __call__(self, x: float) -> float:
+        """Calls self.get_value(x)."""
+        return self.get_value(x)
+
 
 def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
     """Matches and returns two PLFs. After matching the PLFs, they will have the same number
