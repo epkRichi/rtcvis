@@ -11,8 +11,8 @@ def test_point_eq():
 
 
 def test_plf_eq():
-    a = PLF([Point(0, 0), Point(2, 1), Point(5, 3)])
-    b = PLF([Point(0, 0), Point(2, 2), Point(5, 3)])
+    a = PLF([(0, 0), (2, 1), (5, 3)])
+    b = PLF([(0, 0), (2, 2), (5, 3)])
     assert a == a
     assert b == b
     assert a != b

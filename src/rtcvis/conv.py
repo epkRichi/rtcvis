@@ -193,7 +193,5 @@ def get_full_plus_conv(a: PLF, b: PLF, conv_type: ConvType) -> PLF:
         critical_points = get_critical_points(a.transformed(True, 0), b, True)
     else:
         critical_points = get_critical_points(b, a, True)
-    points = []
-    for x in critical_points:
-        points.append(Point(x, conv_function(a, b, x)[1]))
+    points = [Point(x, conv_function(a, b, x)[1]) for x in critical_points]
     return PLF(points)

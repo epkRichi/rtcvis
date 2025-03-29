@@ -1,36 +1,41 @@
+from typing import Union
 from rtcvis.point import Point, point_on_line
 
 
 class PLF:
-    def __init__(self, points: list[Point]) -> None:
+    def __init__(self, points: list[Point] | list[Point | tuple[float, float]]) -> None:
         """A piecewise linear function defined by a list of points.
         The function must be defined at everywhere between the first and the last point.
         It is allowed to have discontinuities by specifying two points at the same x
         coordinate. The function may also have only 1 or 0 points.
 
         Args:
-            points (list[Point]): The points which define the PLF. They must be in the correct order (x may not decrease).
+            points (list[Point | tuple[float, float]]): The points which define the PLF. They must be in the correct order (x may not decrease). The list elements can either be Point instances or tuples of x and y coordinates.
         """
-        if len(points) > 1:
+        _points = [p if isinstance(p, Point) else Point(*p) for p in points]
+        if len(_points) > 1:
             # the points have to be given with ascending x coordinates
-            assert all(points[i].x <= points[i + 1].x for i in range(len(points) - 1))
-        if len(points) > 2:
-            # there can be at most 2 points at the same x coordinate
             assert all(
-                (points[i].x != points[i + 1].x) or (points[i + 1].x != points[i + 2].x)
-                for i in range(len(points) - 2)
+                _points[i].x <= _points[i + 1].x for i in range(len(_points) - 1)
+            )
+        if len(_points) > 2:
+            # there can be at most 2 _points at the same x coordinate
+            assert all(
+                (_points[i].x != _points[i + 1].x)
+                or (_points[i + 1].x != _points[i + 2].x)
+                for i in range(len(_points) - 2)
             )
 
-        self._points = tuple(points)
+        self._points = _points
 
-        if len(points) == 0:
+        if len(_points) == 0:
             self._x_start = 0.0
             self._x_end = 0.0
             self._min = 0.0
             self._max = 0.0
         else:
-            self._x_start = points[0].x
-            self._x_end = points[-1].x
+            self._x_start = _points[0].x
+            self._x_end = _points[-1].x
             self._min = min(point.y for point in self.points)
             self._max = max(point.y for point in self.points)
 

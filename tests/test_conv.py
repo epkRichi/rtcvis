@@ -2,10 +2,8 @@ from rtcvis import *
 
 
 def test_min_plus_conv_1():
-    a = PLF([Point(0, 2), Point(5, 4.5)])
-    b = PLF(
-        [Point(0, 0), Point(1, 0), Point(2, 1), Point(3, 1), Point(4, 2), Point(5, 2)]
-    )
+    a = PLF([(0, 2), (5, 4.5)])
+    b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
     assert min_plus_conv(a, b, 0)[1] == 2
     assert min_plus_conv(a, b, 0.5)[1] == 2
     assert min_plus_conv(a, b, 1)[1] == 2
@@ -17,8 +15,8 @@ def test_min_plus_conv_1():
 
 def test_min_plus_conv_2():
     # convex PLFs that start at (0,0) -> reordering of segments in the order of least slope
-    a = PLF([Point(0, 0), Point(2.5, 1), Point(6, 5.5)])
-    b = PLF([Point(0, 0), Point(4, 1), Point(6.5, 5.5)])
+    a = PLF([(0, 0), (2.5, 1), (6, 5.5)])
+    b = PLF([(0, 0), (4, 1), (6.5, 5.5)])
     # segment 1 (b)
     assert min_plus_conv(a, b, 0)[1] == 0
     assert min_plus_conv(a, b, 1)[1] == 0.25
@@ -41,10 +39,8 @@ def test_min_plus_conv_2():
 
 
 def test_max_plus_conv_1():
-    a = PLF([Point(0, 2), Point(5, 4.5)])
-    b = PLF(
-        [Point(0, 0), Point(1, 0), Point(2, 1), Point(3, 1), Point(4, 2), Point(5, 2)]
-    )
+    a = PLF([(0, 2), (5, 4.5)])
+    b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
     assert max_plus_conv(a, b, 0)[1] == 2
     assert max_plus_conv(a, b, 0.5)[1] == 2.25
     assert max_plus_conv(a, b, 1)[1] == 2.5
@@ -55,10 +51,8 @@ def test_max_plus_conv_1():
 
 
 def test_min_plus_deconv_1():
-    a = PLF([Point(0, 2), Point(12, 5)])  # slope 0.25
-    b = PLF(
-        [Point(0, 0), Point(1, 0), Point(2, 1), Point(3, 1), Point(4, 2), Point(5, 2)]
-    )
+    a = PLF([(0, 2), (12, 5)])  # slope 0.25
+    b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
     assert min_plus_deconv(a, b, 0)[1] == 2.25
     assert min_plus_deconv(a, b, 1)[1] == 2.5
     assert min_plus_deconv(a, b, 2)[1] == 2.75
@@ -66,10 +60,8 @@ def test_min_plus_deconv_1():
 
 
 def test_max_plus_deconv_1():
-    a = PLF([Point(0, 2), Point(12, 5)])  # slope 0.25
-    b = PLF(
-        [Point(0, 0), Point(1, 0), Point(2, 1), Point(3, 1), Point(4, 2), Point(5, 2)]
-    )
+    a = PLF([(0, 2), (12, 5)])  # slope 0.25
+    b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
     assert max_plus_deconv(a, b, 0)[1] == 1
     assert max_plus_deconv(a, b, 1)[1] == 1.25
     assert max_plus_deconv(a, b, 2)[1] == 1.5
