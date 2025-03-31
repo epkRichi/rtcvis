@@ -1,16 +1,16 @@
-from typing import Union
+from typing import Sequence
 from rtcvis.point import Point, point_on_line
 
 
 class PLF:
-    def __init__(self, points: list[Point] | list[Point | tuple[float, float]]) -> None:
+    def __init__(self, points: Sequence[Point | tuple[float, float]]) -> None:
         """A piecewise linear function defined by a list of points.
         The function must be defined at everywhere between the first and the last point.
         It is allowed to have discontinuities by specifying two points at the same x
         coordinate. The function may also have only 1 or 0 points.
 
         Args:
-            points (list[Point | tuple[float, float]]): The points which define the PLF. They must be in the correct order (x may not decrease). The list elements can either be Point instances or tuples of x and y coordinates.
+            points (Sequence[Point | tuple[float, float]]): The points which define the PLF. They must be in the correct order (x may not decrease). The list elements can either be Point instances or tuples of x and y coordinates.
         """
         _points = [p if isinstance(p, Point) else Point(*p) for p in points]
         if len(_points) > 1:

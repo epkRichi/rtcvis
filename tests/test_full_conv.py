@@ -3,40 +3,48 @@ from rtcvis.conv import get_critical_points
 
 
 def test_critical_points_1():
-    assert get_critical_points(PLF([]), PLF([]), False) == []
-    assert get_critical_points(PLF([(0, 0)]), PLF([]), False) == []
-    assert get_critical_points(PLF([]), PLF([(0, 0)]), False) == []
-    assert get_critical_points(PLF([(0, 1)]), PLF([(0, 5)]), False) == [0]
-    assert get_critical_points(PLF([(-1, 1)]), PLF([(0, 5)]), False) == [1]
-    assert get_critical_points(PLF([(1, 1)]), PLF([(0, 5)]), False) == [-1]
-    assert get_critical_points(PLF([(1, 1)]), PLF([(0, 5), (1, 5)]), False) == [-1, 0]
-    assert get_critical_points(PLF([(1, 1)]), PLF([(0, 5), (1, 5)]), False) == [-1, 0]
-    assert get_critical_points(PLF([(0, 5), (1, 5)]), PLF([(1, 1)]), False) == [0, 1]
-    assert get_critical_points(
-        PLF([(0, 5), (1, 5)]), PLF([(0.5, 1), (1.5, 3)]), False
-    ) == [-0.5, 0.5, 1.5]
+    # cp will return the points for a being shifted to the right (confusing, ik)
+    cp = lambda a, b: get_critical_points(b, a, ConvType.MAX_PLUS_DECONV, None, None)
+    assert cp(PLF([]), PLF([])) == []
+    assert cp(PLF([(0, 0)]), PLF([])) == []
+    assert cp(PLF([]), PLF([(0, 0)])) == []
+    assert cp(PLF([(0, 1)]), PLF([(0, 5)])) == [0]
+    assert cp(PLF([(-1, 1)]), PLF([(0, 5)])) == [1]
+    assert cp(PLF([(1, 1)]), PLF([(0, 5)])) == [-1]
+    assert cp(PLF([(1, 1)]), PLF([(0, 5), (1, 5)])) == [-1, 0]
+    assert cp(PLF([(1, 1)]), PLF([(0, 5), (1, 5)])) == [-1, 0]
+    assert cp(PLF([(0, 5), (1, 5)]), PLF([(1, 1)])) == [0, 1]
+    assert cp(PLF([(0, 5), (1, 5)]), PLF([(0.5, 1), (1.5, 3)])) == [
+        -0.5,
+        0.5,
+        1.5,
+    ]
 
 
 def test_critical_points_2():
-    assert get_critical_points(PLF([]), PLF([]), True) == []
-    assert get_critical_points(PLF([(0, 0)]), PLF([]), True) == []
-    assert get_critical_points(PLF([]), PLF([(0, 0)]), True) == []
-    assert get_critical_points(PLF([(0, 1)]), PLF([(0, 5)]), True) == [0]
-    assert get_critical_points(PLF([(-1, 1)]), PLF([(0, 5)]), True) == [1]
-    assert get_critical_points(PLF([(1, 1)]), PLF([(0, 5)]), True) == []
-    assert get_critical_points(PLF([(1, 1)]), PLF([(0, 5), (1, 5)]), True) == [0]
-    assert get_critical_points(PLF([(1, 1)]), PLF([(0, 5), (1, 5)]), True) == [0]
-    assert get_critical_points(PLF([(0, 5), (1, 5)]), PLF([(1, 1)]), True) == [0, 1]
-    assert get_critical_points(
-        PLF([(0, 5), (1, 5)]), PLF([(0.5, 1), (1.5, 3)]), True
-    ) == [0, 0.5, 1.5]
+    # cp will return the points for a being shifted to the right (confusing, ik)
+    cp = lambda a, b: get_critical_points(b, a, ConvType.MAX_PLUS_DECONV, 0, None)
+    assert cp(PLF([]), PLF([])) == []
+    assert cp(PLF([(0, 0)]), PLF([])) == []
+    assert cp(PLF([]), PLF([(0, 0)])) == []
+    assert cp(PLF([(0, 1)]), PLF([(0, 5)])) == [0]
+    assert cp(PLF([(-1, 1)]), PLF([(0, 5)])) == [1]
+    assert cp(PLF([(1, 1)]), PLF([(0, 5)])) == []
+    assert cp(PLF([(1, 1)]), PLF([(0, 5), (1, 5)])) == [0]
+    assert cp(PLF([(1, 1)]), PLF([(0, 5), (1, 5)])) == [0]
+    assert cp(PLF([(0, 5), (1, 5)]), PLF([(1, 1)])) == [0, 1]
+    assert cp(PLF([(0, 5), (1, 5)]), PLF([(0.5, 1), (1.5, 3)])) == [
+        0,
+        0.5,
+        1.5,
+    ]
 
 
 def test_min_plus_conv_1():
     conv_type = ConvType.MIN_PLUS_CONV
     a = PLF([(0, 2), (5, 4.5)])
     b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    result = get_full_plus_conv(a, b, conv_type)
+    result = conv(a, b, conv_type)
     assert result.x_start == 0
     assert result.x_end == b.x_end + a.x_end
     assert result(0) == 2
@@ -53,7 +61,7 @@ def test_min_plus_conv_2():
     # convex PLFs that start at (0,0) -> reordering of segments in the order of least slope
     a = PLF([(0, 0), (2.5, 1), (6, 5.5)])
     b = PLF([(0, 0), (4, 1), (6.5, 5.5)])
-    result = get_full_plus_conv(a, b, conv_type)
+    result = conv(a, b, conv_type)
     assert result.x_start == 0
     assert result.x_end == b.x_end + a.x_end
     # segment 1 (b)
@@ -79,7 +87,7 @@ def test_max_plus_conv_1():
     conv_type = ConvType.MAX_PLUS_CONV
     a = PLF([(0, 2), (5, 4.5)])
     b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    result = get_full_plus_conv(a, b, conv_type)
+    result = conv(a, b, conv_type)
     assert result.x_start == 0
     assert result.x_end == b.x_end + a.x_end
     assert result(0) == 2
@@ -95,7 +103,7 @@ def test_min_plus_deconv_1():
     conv_type = ConvType.MIN_PLUS_DECONV
     a = PLF([(0, 2), (12, 5)])  # slope 0.25
     b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    result = get_full_plus_conv(a, b, conv_type)
+    result = conv(a, b, conv_type, 0)
     assert result.x_start == 0
     assert result.x_end == a.x_end
     assert result(0) == 2.25
@@ -108,7 +116,7 @@ def test_max_plus_deconv_1():
     conv_type = ConvType.MAX_PLUS_DECONV
     a = PLF([(0, 2), (12, 5)])  # slope 0.25
     b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    result = get_full_plus_conv(a, b, conv_type)
+    result = conv(a, b, conv_type, 0)
     assert result.x_start == 0
     assert result.x_end == a.x_end
     assert result(0) == 1

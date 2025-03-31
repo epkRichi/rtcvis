@@ -4,65 +4,70 @@ from rtcvis import *
 def test_min_plus_conv_1():
     a = PLF([(0, 2), (5, 4.5)])
     b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    assert min_plus_conv(a, b, 0)[1] == 2
-    assert min_plus_conv(a, b, 0.5)[1] == 2
-    assert min_plus_conv(a, b, 1)[1] == 2
-    assert min_plus_conv(a, b, 1.5)[1] == 2.25
-    assert min_plus_conv(a, b, 2)[1] == 2.5
-    assert min_plus_conv(a, b, 2.5)[1] == 2.75
-    assert min_plus_conv(a, b, 3)[1] == 3
+    conv_type = ConvType.MIN_PLUS_CONV
+    assert conv_at_x(a, b, 0, conv_type) == 2
+    assert conv_at_x(a, b, 0.5, conv_type) == 2
+    assert conv_at_x(a, b, 1, conv_type) == 2
+    assert conv_at_x(a, b, 1.5, conv_type) == 2.25
+    assert conv_at_x(a, b, 2, conv_type) == 2.5
+    assert conv_at_x(a, b, 2.5, conv_type) == 2.75
+    assert conv_at_x(a, b, 3, conv_type) == 3
 
 
 def test_min_plus_conv_2():
     # convex PLFs that start at (0,0) -> reordering of segments in the order of least slope
     a = PLF([(0, 0), (2.5, 1), (6, 5.5)])
     b = PLF([(0, 0), (4, 1), (6.5, 5.5)])
+    conv_type = ConvType.MIN_PLUS_CONV
     # segment 1 (b)
-    assert min_plus_conv(a, b, 0)[1] == 0
-    assert min_plus_conv(a, b, 1)[1] == 0.25
-    assert min_plus_conv(a, b, 2)[1] == 0.5
-    assert min_plus_conv(a, b, 4)[1] == 1
+    assert conv_at_x(a, b, 0, conv_type) == 0
+    assert conv_at_x(a, b, 1, conv_type) == 0.25
+    assert conv_at_x(a, b, 2, conv_type) == 0.5
+    assert conv_at_x(a, b, 4, conv_type) == 1
     # segment 2 (a)
-    assert min_plus_conv(a, b, 5)[1] == 1.4
-    assert min_plus_conv(a, b, 6)[1] == 1.8
-    assert min_plus_conv(a, b, 6.5)[1] == 2
+    assert conv_at_x(a, b, 5, conv_type) == 1.4
+    assert conv_at_x(a, b, 6, conv_type) == 1.8
+    assert conv_at_x(a, b, 6.5, conv_type) == 2
     # segment 3 (b)
-    assert min_plus_conv(a, b, 7.5)[1] == 2 + 1 * (
+    assert conv_at_x(a, b, 7.5, conv_type) == 2 + 1 * (
         9 / 7
     )  # why did I choose such ugly numbers?
-    assert min_plus_conv(a, b, 8.5)[1] == 2 + 2 * (9 / 7)
-    assert min_plus_conv(a, b, 10)[1] == 2 + 3.5 * (9 / 7)
+    assert conv_at_x(a, b, 8.5, conv_type) == 2 + 2 * (9 / 7)
+    assert conv_at_x(a, b, 10, conv_type) == 2 + 3.5 * (9 / 7)
     # Segment 4 (a)
-    assert min_plus_conv(a, b, 11)[1] == 2 + 3.5 * (9 / 7) + 1 * (9 / 5)
-    assert min_plus_conv(a, b, 12)[1] == 2 + 3.5 * (9 / 7) + 2 * (9 / 5)
-    assert min_plus_conv(a, b, 12.5)[1] == 2 + 3.5 * (9 / 7) + 2.5 * (9 / 5)
+    assert conv_at_x(a, b, 11, conv_type) == 2 + 3.5 * (9 / 7) + 1 * (9 / 5)
+    assert conv_at_x(a, b, 12, conv_type) == 2 + 3.5 * (9 / 7) + 2 * (9 / 5)
+    assert conv_at_x(a, b, 12.5, conv_type) == 2 + 3.5 * (9 / 7) + 2.5 * (9 / 5)
 
 
 def test_max_plus_conv_1():
     a = PLF([(0, 2), (5, 4.5)])
     b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    assert max_plus_conv(a, b, 0)[1] == 2
-    assert max_plus_conv(a, b, 0.5)[1] == 2.25
-    assert max_plus_conv(a, b, 1)[1] == 2.5
-    assert max_plus_conv(a, b, 1.5)[1] == 2.75
-    assert max_plus_conv(a, b, 2)[1] == 3
-    assert max_plus_conv(a, b, 2.5)[1] == 3.25
-    assert max_plus_conv(a, b, 3)[1] == 3.5
+    conv_type = ConvType.MAX_PLUS_CONV
+    assert conv_at_x(a, b, 0, conv_type) == 2
+    assert conv_at_x(a, b, 0.5, conv_type) == 2.25
+    assert conv_at_x(a, b, 1, conv_type) == 2.5
+    assert conv_at_x(a, b, 1.5, conv_type) == 2.75
+    assert conv_at_x(a, b, 2, conv_type) == 3
+    assert conv_at_x(a, b, 2.5, conv_type) == 3.25
+    assert conv_at_x(a, b, 3, conv_type) == 3.5
 
 
 def test_min_plus_deconv_1():
     a = PLF([(0, 2), (12, 5)])  # slope 0.25
     b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    assert min_plus_deconv(a, b, 0)[1] == 2.25
-    assert min_plus_deconv(a, b, 1)[1] == 2.5
-    assert min_plus_deconv(a, b, 2)[1] == 2.75
-    assert min_plus_deconv(a, b, 3)[1] == 3
+    conv_type = ConvType.MIN_PLUS_DECONV
+    assert conv_at_x(a, b, 0, conv_type) == 2.25
+    assert conv_at_x(a, b, 1, conv_type) == 2.5
+    assert conv_at_x(a, b, 2, conv_type) == 2.75
+    assert conv_at_x(a, b, 3, conv_type) == 3
 
 
 def test_max_plus_deconv_1():
     a = PLF([(0, 2), (12, 5)])  # slope 0.25
     b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    assert max_plus_deconv(a, b, 0)[1] == 1
-    assert max_plus_deconv(a, b, 1)[1] == 1.25
-    assert max_plus_deconv(a, b, 2)[1] == 1.5
-    assert max_plus_deconv(a, b, 3)[1] == 1.75
+    conv_type = ConvType.MAX_PLUS_DECONV
+    assert conv_at_x(a, b, 0, conv_type) == 1
+    assert conv_at_x(a, b, 1, conv_type) == 1.25
+    assert conv_at_x(a, b, 2, conv_type) == 1.5
+    assert conv_at_x(a, b, 3, conv_type) == 1.75

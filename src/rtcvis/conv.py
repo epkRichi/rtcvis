@@ -1,155 +1,7 @@
+from typing import Optional
 import enum
-from typing import Callable
-import numpy as np
 from rtcvis.plf import PLF
 from rtcvis.point import Point
-
-
-def plus_conv(a: PLF, b: PLF, delta_x: float) -> PLF:
-    r"""Computes the resulting PLF of the plus convolution of a and b.
-    This function does not return the minimum or maximum of the resulting
-    PLF, it instead returns the PLF itself. The returned function will
-    also be truncated so it is only defined for 0 <= x <= delta_x.
-
-    Returned PLF: f(x) = a(delta_x - x) + b(x)
-
-    Args:
-        a (PLF): Function a.
-        b (PLF): Function b.
-        delta_x (float): The x for which to compute the plus convolution.
-
-    Returns:
-        PLF: The result of the plus convolution.
-    """
-    a = a.transformed(mirror=True, offset=delta_x)
-    s = a + b
-    s = s.start_truncated(0).end_truncated(delta_x)
-    return s
-
-
-def plus_deconv(a: PLF, b: PLF, delta_x: float) -> PLF:
-    r"""Computes the resulting PLF of the plus deconvolution of a and b.
-    This function does not return the minimum or maximum of the resulting
-    PLF, it instead returns the PLF itself. The returned function will
-    also be truncated so it is only defined for x > 0.
-
-    Returned PLF: f(x) = a(delta_x + x) - b(x)
-
-    Args:
-        a (PLF): Function a.
-        b (PLF): Function b.
-        delta_x (float): The x for which to compute the plus deconvolution.
-
-    Returns:
-        PLF: The result of the plus convolution.
-    """
-    a = a.transformed(mirror=False, offset=-delta_x)
-    s = a - b
-    s = s.start_truncated(0)
-    return s
-
-
-def min_plus_conv(a: PLF, b: PLF, delta_x: float) -> tuple[PLF, float]:
-    r"""Computes the min plus convolution of a and b at delta_x. Returns
-    the result as well as the resulting function before taking the minimum.
-
-    Args:
-        a (PLF): Function a.
-        b (PLF): Function b.
-        delta_x (float): The x for which to compute the min plus convolution.
-
-    Returns:
-        tuple[PLF, float]: The resulting PLF and its minimum.
-    """
-    f = plus_conv(a=a, b=b, delta_x=delta_x)
-    return f, f.min
-
-
-def min_plus_deconv(a: PLF, b: PLF, delta_x: float) -> tuple[PLF, float]:
-    r"""Computes the min plus deconvolution of a and b at delta_x. Returns
-    the result as well as the resulting function before taking the maximum.
-
-    Args:
-        a (PLF): Function a.
-        b (PLF): Function b.
-        delta_x (float): The x for which to compute the min plus deconvolution.
-
-    Returns:
-        tuple[PLF, float]: The resulting PLF and its maximum.
-    """
-    f = plus_deconv(a=a, b=b, delta_x=delta_x)
-    return f, f.max
-
-
-def max_plus_conv(a: PLF, b: PLF, delta_x: float) -> tuple[PLF, float]:
-    r"""Computes the max plus convolution of a and b at delta_x. Returns
-    the result as well as the resulting function before taking the maximum.
-
-    Args:
-        a (PLF): Function a.
-        b (PLF): Function b.
-        delta_x (float): The x for which to compute the max plus convolution.
-
-    Returns:
-        tuple[PLF, float]: The resulting PLF and its maximum.
-    """
-    f = plus_conv(a=a, b=b, delta_x=delta_x)
-    return f, f.max
-
-
-def max_plus_deconv(a: PLF, b: PLF, delta_x: float) -> tuple[PLF, float]:
-    r"""Computes the max plus deconvolution of a and b at delta_x. Returns
-    the result as well as the resulting function before taking the minimum.
-
-    Args:
-        a (PLF): Function a.
-        b (PLF): Function b.
-        delta_x (float): The x for which to compute the max plus deconvolution.
-
-    Returns:
-        tuple[PLF, float]: The resulting PLF and its minimum.
-    """
-    f = plus_deconv(a=a, b=b, delta_x=delta_x)
-    return f, f.min
-
-
-def get_critical_points(a: PLF, b: PLF, truncate: bool) -> list[float]:
-    """Computes an ordered list of all x-offset values by which a must be shifted so that
-    one point of a will be at the same x coordinate as another point of b.
-
-    This function is used for computing full convolutions.
-
-    Args:
-        a (PLF): Function a
-        b (PLF): Function b
-        truncate (bool): Whether the result should only contain value >= 0. A new value of 0 will be inserted after truncation if needed.
-
-    Returns:
-        list[float]: Ordered list of all x-offset values (unique).
-    """
-    b_x_cords = [point.x for point in b.points]
-    critical_points = []
-    for p in a.points:
-        new_critical_points = [b_x_cord - p.x for b_x_cord in b_x_cords]
-        critical_points += new_critical_points
-    result = list(set(critical_points))
-    result.sort()
-    if len(result) == 0:
-        return result
-
-    if truncate:
-        if result[0] >= 0:
-            return result
-        # result needs to be truncated, find the first element >= 0
-        for idx, el in enumerate(result):
-            if el == 0:
-                return result[idx:]
-            if el > 0:  # insert a 0 at the beginning
-                return [0] + result[idx:]
-        # all elements are < 0
-        return []
-    else:
-        return result
 
 
 class ConvType(enum.Enum):
@@ -160,38 +12,149 @@ class ConvType(enum.Enum):
     MIN_PLUS_CONV = 2
     MIN_PLUS_DECONV = 3
 
-    def get_conv_function(self) -> Callable[[PLF, PLF, float], tuple[PLF, float]]:
-        """Returns the function for computing the corresponding (de-)convolution for
-        a specific x.
 
-        Returns:
-            Callable[[PLF, PLF, float], tuple[PLF, float]]: The corresponding function.
+class ConvAtXResult:
+    def __init__(self, transformed_a: PLF, sum: PLF, result: float) -> None:
+        """The result of a convolution at a specific x.
+
+        Args:
+            transformed_a (PLF): The shifted and optionally mirrored PLF a.
+            sum (PLF): The sum or difference between the transformed PLF a and PLF b.
+            result (float): The actual result of the convolution.
         """
-        match self:
-            case ConvType.MAX_PLUS_CONV:
-                return max_plus_conv
-            case ConvType.MAX_PLUS_DECONV:
-                return max_plus_deconv
-            case ConvType.MIN_PLUS_CONV:
-                return min_plus_conv
-            case ConvType.MIN_PLUS_DECONV:
-                return min_plus_deconv
+        self._transformed_a = transformed_a
+        self._sum = sum
+        self._result = result
 
-    def mirrors(self) -> bool:
-        """Returns whether this type of (de-)convolution mirrors a before shifting it.
-        This is true for the convolutions and false for the deconvolutions.
+    @property
+    def transformed_a(self) -> PLF:
+        return self._transformed_a
 
-        Returns:
-            bool: Whether a gets mirrored.
-        """
-        return self == ConvType.MAX_PLUS_CONV or self == ConvType.MIN_PLUS_CONV
+    @property
+    def sum(self) -> PLF:
+        return self._sum
+
+    @property
+    def result(self) -> float:
+        return self._result
+
+    def __eq__(self, other) -> bool:
+        return self.result == other
 
 
-def get_full_plus_conv(a: PLF, b: PLF, conv_type: ConvType) -> PLF:
-    conv_function = conv_type.get_conv_function()
-    if conv_type == ConvType.MAX_PLUS_CONV or conv_type == ConvType.MIN_PLUS_CONV:
-        critical_points = get_critical_points(a.transformed(True, 0), b, True)
+def conv_at_x(a: PLF, b: PLF, delta_x: float, conv_type: ConvType) -> ConvAtXResult:
+    """Computes the given type of convolution of a and b at the given x.
+
+    Args:
+        a (PLF): PLF a
+        b (PLF): PLF b
+        delta_x (float): The x at which to evaluate the convolution.
+        conv_type (ConvType): The type of convolution
+
+    Returns:
+        ConvAtXResult: An object containing several properties of the result.
+    """
+    if conv_type == ConvType.MIN_PLUS_CONV or conv_type == ConvType.MAX_PLUS_CONV:
+        transformed_a = a.transformed(mirror=True, offset=delta_x)
+        s = transformed_a + b
     else:
-        critical_points = get_critical_points(b, a, True)
-    points = [Point(x, conv_function(a, b, x)[1]) for x in critical_points]
+        transformed_a = a.transformed(mirror=False, offset=-delta_x)
+        s = transformed_a - b
+    if conv_type == ConvType.MIN_PLUS_CONV or conv_type == ConvType.MAX_PLUS_DECONV:
+        result = s.min
+    else:
+        result = s.max
+    return ConvAtXResult(transformed_a=transformed_a, sum=s, result=result)
+
+
+def get_critical_points(
+    a: PLF,
+    b: PLF,
+    conv_type: ConvType,
+    start: Optional[float] = None,
+    stop: Optional[float] = None,
+) -> list[float]:
+    """Computes an ordered list of all x-offset values by which a must be shifted so that
+    one point of a will be at the same x coordinate as another point of b.
+
+    This function is used for computing full convolutions.
+
+    Args:
+        a (PLF): PLF a
+        b (PLF): PLF b
+        truncate (bool): Whether the result should only contain value >= 0. A new value of 0 will be inserted after truncation if needed.
+
+    Returns:
+        list[float]: Ordered list of all x-offset values (unique).
+    """
+    if conv_type == ConvType.MAX_PLUS_CONV or conv_type == ConvType.MIN_PLUS_CONV:
+        a = a.transformed(
+            True, 0
+        )  # a has to be mirrored before being moved to the right
+    else:
+        a, b = (
+            b,
+            a,
+        )  # a has to be moved to the left which is the same as moving b to the right
+
+    b_x_cords = [point.x for point in b.points]
+    critical_points = []
+    for p in a.points:
+        new_critical_points = [b_x_cord - p.x for b_x_cord in b_x_cords]
+        critical_points += new_critical_points
+    result = list(set(critical_points))
+    result.sort()
+    if len(result) == 0:
+        return result
+
+    if start is not None and result[0] < start:
+        if result[-1] < start:
+            # all elements are < start
+            return []
+        # result needs to be truncated at start, find the first element >= start
+        for idx, el in enumerate(result):
+            if el == start:
+                result = result[idx:]
+                break
+            if el > start:  # insert a 0 at the beginning
+                result = [start] + result[idx:]
+                break
+
+    if stop is not None and result[-1] > stop:
+        if result[0] > stop:
+            # all elements are > stop
+            return []
+        # result needs to be truncated at end, find the last element < stop
+        for idx, el in reversed(list(enumerate(result))):
+            if el == stop:
+                result = result[: idx + 1]
+                break
+            if el < stop:  # insert a 0 at the beginning
+                result = result[: idx + 1] + [stop]
+                break
+
+    return result
+
+
+def conv(
+    a: PLF,
+    b: PLF,
+    conv_type: ConvType,
+    start: Optional[float] = None,
+    stop: Optional[float] = None,
+) -> PLF:
+    """Computes the convolution of given type of a and b.
+
+    Args:
+        a (PLF): PLF a
+        b (PLF): PLF b
+        conv_type (ConvType): The type of convolution
+        start (Optional[float], optional): The lowest x value for which the resulting PLF should be defined. Defaults to None.
+        stop (Optional[float], optional): The largest x value for which the resulting PLF should be defined. Defaults to None.
+
+    Returns:
+        PLF: The result of the convolution.
+    """
+    critical_points = get_critical_points(a, b, conv_type, start, stop)
+    points = [Point(x, conv_at_x(a, b, x, conv_type).result) for x in critical_points]
     return PLF(points)
