@@ -12,21 +12,21 @@ class PLF:
         Args:
             points (Sequence[Point | tuple[float, float]]): The points which define the PLF. They must be in the correct order (x may not decrease). The list elements can either be Point instances or tuples of x and y coordinates.
         """
-        _points = [p if isinstance(p, Point) else Point(*p) for p in points]
+        self._points = _points = [
+            p if isinstance(p, Point) else Point(*p) for p in points
+        ]
+        self._x = _x = [p.x for p in _points]
+        self._y = _y = [p.y for p in _points]
+
         if len(_points) > 1:
             # the points have to be given with ascending x coordinates
-            assert all(
-                _points[i].x <= _points[i + 1].x for i in range(len(_points) - 1)
-            )
+            assert all(_x[i] <= _x[i + 1] for i in range(len(_points) - 1))
         if len(_points) > 2:
             # there can be at most 2 _points at the same x coordinate
             assert all(
-                (_points[i].x != _points[i + 1].x)
-                or (_points[i + 1].x != _points[i + 2].x)
+                (_x[i] != _x[i + 1]) or (_x[i + 1] != _x[i + 2])
                 for i in range(len(_points) - 2)
             )
-
-        self._points = _points
 
         if len(_points) == 0:
             self._x_start = 0.0
@@ -34,10 +34,10 @@ class PLF:
             self._min = 0.0
             self._max = 0.0
         else:
-            self._x_start = _points[0].x
-            self._x_end = _points[-1].x
-            self._min = min(point.y for point in self.points)
-            self._max = max(point.y for point in self.points)
+            self._x_start = _x[0]
+            self._x_end = _x[-1]
+            self._min = min(_y)
+            self._max = max(_y)
 
     @property
     def x_start(self):
@@ -58,6 +58,14 @@ class PLF:
     @property
     def max(self):
         return self._max
+
+    @property
+    def x(self):
+        return self._x
+
+    @property
+    def y(self):
+        return self._y
 
     def __repr__(self) -> str:
         return f"PLF([{', '.join([repr(point) for point in self.points])}])"
