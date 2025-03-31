@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
+import matplotlib.colors as mcolors
 import numpy as np
 
 from rtcvis.plf import PLF
@@ -9,6 +10,12 @@ from rtcvis.conv import ConvType, conv, conv_at_x
 
 def plot_conv(a: PLF, b: PLF):
     assert a.x_start == 0 and b.x_start == 0 and a.x_end == b.x_end
+
+    color_a = mcolors.TABLEAU_COLORS["tab:olive"]
+    color_b = mcolors.TABLEAU_COLORS["tab:orange"]
+    color_sum = mcolors.TABLEAU_COLORS["tab:purple"]
+    color_result = mcolors.TABLEAU_COLORS["tab:gray"]
+
     fig, ax = plt.subplots()
     ax.set_aspect("equal", adjustable="box")
 
@@ -27,16 +34,33 @@ def plot_conv(a: PLF, b: PLF):
     )
 
     # plot transformed a
-    (graph_a,) = ax.plot(conv_result.transformed_a.x, conv_result.transformed_a.y)
+    (graph_a,) = ax.plot(
+        conv_result.transformed_a.x,
+        conv_result.transformed_a.y,
+        label="transformed a",
+        color=color_a,
+    )
 
     # plot b
-    ax.plot(b.x, b.y)
+    ax.plot(b.x, b.y, label="b", color=color_b)
 
     # plot convolution sum
-    (graph_sum,) = ax.plot(conv_result.sum.x, conv_result.sum.y)
+    (graph_sum,) = ax.plot(
+        conv_result.sum.x, conv_result.sum.y, label="sum", color=color_sum
+    )
 
     # add marker for conv result
-    # (graph_marker,) = ax.plot([initial_x], res, marker="s")
+    (graph_marker,) = ax.plot(
+        [conv_result.result.x],
+        [conv_result.result.y],
+        marker=".",
+        label="sum minimum",
+        color=graph_sum.get_color(),
+    )
+
+    # plot full result
+    # conv_plf = conv(a, b, conv_type, 0, a.x_end)
+    # ax.plot(conv_plf.x, conv_plf.y, label="full result", color=color_result)
 
     # Slider update function
     def update(val):
@@ -54,12 +78,15 @@ def plot_conv(a: PLF, b: PLF):
         graph_sum.set_xdata(conv_result.sum.x)
         graph_sum.set_ydata(conv_result.sum.y)
 
-        # # Update minconv marker
-        # graph_marker.set_xdata([s.min])
-        # graph_marker.set_ydata([min_y])
+        # Update minconv marker
+        graph_marker.set_xdata([conv_result.result.x])
+        graph_marker.set_ydata([conv_result.result.y])
 
     # register the slider
     deltax_slider.on_changed(update)
+
+    # add legend
+    ax.legend(loc="upper left")
 
     plt.show()
 
