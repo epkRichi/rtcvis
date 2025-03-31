@@ -14,13 +14,13 @@ class ConvType(enum.Enum):
 
 
 class ConvAtXResult:
-    def __init__(self, transformed_a: PLF, sum: PLF, result: float) -> None:
+    def __init__(self, transformed_a: PLF, sum: PLF, result: Point) -> None:
         """The result of a convolution at a specific x.
 
         Args:
             transformed_a (PLF): The shifted and optionally mirrored PLF a.
             sum (PLF): The sum or difference between the transformed PLF a and PLF b.
-            result (float): The actual result of the convolution.
+            result (Point): The point which has the minimum/maximum value of the sum PLF, depending on the type of convolution. Its y value is the actual result of the convolution.
         """
         self._transformed_a = transformed_a
         self._sum = sum
@@ -35,11 +35,8 @@ class ConvAtXResult:
         return self._sum
 
     @property
-    def result(self) -> float:
+    def result(self) -> Point:
         return self._result
-
-    def __eq__(self, other) -> bool:
-        return self.result == other
 
 
 def conv_at_x(a: PLF, b: PLF, delta_x: float, conv_type: ConvType) -> ConvAtXResult:
@@ -156,5 +153,5 @@ def conv(
         PLF: The result of the convolution.
     """
     critical_points = get_critical_points(a, b, conv_type, start, stop)
-    points = [Point(x, conv_at_x(a, b, x, conv_type).result) for x in critical_points]
+    points = [Point(x, conv_at_x(a, b, x, conv_type).result.y) for x in critical_points]
     return PLF(points)

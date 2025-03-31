@@ -31,13 +31,13 @@ class PLF:
         if len(_points) == 0:
             self._x_start = 0.0
             self._x_end = 0.0
-            self._min = 0.0
-            self._max = 0.0
+            self._min = Point(0, 0)
+            self._max = Point(0, 0)
         else:
             self._x_start = _x[0]
             self._x_end = _x[-1]
-            self._min = min(_y)
-            self._max = max(_y)
+            self._min = Point(_x[_y.index(min(_y))], min(_y))
+            self._max = Point(_x[_y.index(max(_y))], max(_y))
 
     @property
     def x_start(self):
