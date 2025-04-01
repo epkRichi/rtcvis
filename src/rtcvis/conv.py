@@ -12,6 +12,22 @@ class ConvType(enum.Enum):
     MIN_PLUS_CONV = 2
     MIN_PLUS_DECONV = 3
 
+    def __str__(self) -> str:
+        """Returns the name of the convolution.
+
+        Returns:
+            str: The name of the convolution.
+        """
+        match self:
+            case ConvType.MAX_PLUS_CONV:
+                return "Max-Plus-Convolution"
+            case ConvType.MAX_PLUS_DECONV:
+                return "Max-Plus-Deconvolution"
+            case ConvType.MIN_PLUS_CONV:
+                return "Min-Plus-Convolution"
+            case ConvType.MIN_PLUS_DECONV:
+                return "Min-Plus-Deconvolution"
+
 
 class ConvAtXResult:
     def __init__(self, transformed_a: PLF, sum: PLF, result: Point) -> None:
