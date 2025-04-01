@@ -15,7 +15,8 @@ def test_min_plus_conv_1():
 
 
 def test_min_plus_conv_2():
-    # convex PLFs that start at (0,0) -> reordering of segments in the order of least slope
+    # convex PLFs that start at (0,0)
+    # -> reordering of segments in the order of least slope
     a = PLF([(0, 0), (2.5, 1), (6, 5.5)])
     b = PLF([(0, 0), (4, 1), (6.5, 5.5)])
     conv_type = ConvType.MIN_PLUS_CONV

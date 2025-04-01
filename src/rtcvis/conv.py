@@ -36,7 +36,9 @@ class ConvAtXResult:
         Args:
             transformed_a (PLF): The shifted and optionally mirrored PLF a.
             sum (PLF): The sum or difference between the transformed PLF a and PLF b.
-            result (Point): The point which has the minimum/maximum value of the sum PLF, depending on the type of convolution. Its y value is the actual result of the convolution.
+            result (Point): The point which has the minimum/maximum value of the sum
+                PLF, depending on the type of convolution. Its y value is the actual
+                result of the convolution.
         """
         self._transformed_a = transformed_a
         self._sum = sum
@@ -87,15 +89,18 @@ def get_critical_points(
     start: Optional[float] = None,
     stop: Optional[float] = None,
 ) -> list[float]:
-    """Computes an ordered list of all x-offset values by which a must be shifted so that
-    one point of a will be at the same x coordinate as another point of b.
+    """Computes the x-values for which convolutions should be computed.
+
+    Computes an ordered list of all x-offset values by which PLF a must be shifted so
+    that one point of a will be at the same x coordinate as another point of b.
 
     This function is used for computing full convolutions.
 
     Args:
         a (PLF): PLF a
         b (PLF): PLF b
-        truncate (bool): Whether the result should only contain value >= 0. A new value of 0 will be inserted after truncation if needed.
+        truncate (bool): Whether the result should only contain value >= 0.
+            A new value of 0 will be inserted after truncation if needed.
 
     Returns:
         list[float]: Ordered list of all x-offset values (unique).
@@ -162,8 +167,10 @@ def conv(
         a (PLF): PLF a
         b (PLF): PLF b
         conv_type (ConvType): The type of convolution
-        start (Optional[float], optional): The lowest x value for which the resulting PLF should be defined. Defaults to None.
-        stop (Optional[float], optional): The largest x value for which the resulting PLF should be defined. Defaults to None.
+        start (Optional[float], optional): The lowest x value for which the resulting
+            PLF should be defined. Defaults to None.
+        stop (Optional[float], optional): The largest x value for which the resulting
+            PLF should be defined. Defaults to None.
 
     Returns:
         PLF: The result of the convolution.

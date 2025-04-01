@@ -5,12 +5,15 @@ from rtcvis.point import Point, point_on_line
 class PLF:
     def __init__(self, points: Sequence[Point | tuple[float, float]]) -> None:
         """A piecewise linear function defined by a list of points.
+
         The function must be defined at everywhere between the first and the last point.
         It is allowed to have discontinuities by specifying two points at the same x
         coordinate. The function may also have only 1 or 0 points.
 
         Args:
-            points (Sequence[Point | tuple[float, float]]): The points which define the PLF. They must be in the correct order (x may not decrease). The list elements can either be Point instances or tuples of x and y coordinates.
+            points (Sequence[Point | tuple[float, float]]): The points which define the
+                PLF. They must be in the correct order (x may not decrease). The list
+                elements can either be Point instances or tuples of x and y coordinates.
         """
         self._points = _points = [
             p if isinstance(p, Point) else Point(*p) for p in points
@@ -77,8 +80,10 @@ class PLF:
         return all(a == b for a, b in zip(self.points, other.points))
 
     def start_truncated(self, x_start: float) -> "PLF":
-        """Creates a new PLF which has the same which has the same function values
-        at all x >= x_start, but which is not defined for any x < x_start.
+        """Creates a new PLF that is truncated at the start.
+
+        The new PLF has the same function values at all x >= x_start, but it is not
+        defined for any x < x_start.
 
         Args:
             x_start (float): The x coordinate at which to truncate the PLF.
@@ -104,8 +109,10 @@ class PLF:
         return PLF([])
 
     def end_truncated(self, x_end: float) -> "PLF":
-        """Creates a new PLF which has the same which has the same function values
-        at all x <= x_end, but which is not defined for any x > x_end.
+        """Creates a new PLF that is truncated at the end.
+
+        The new PLF has the same function values at all x <= x_end, but it is not
+        defined for any x > x_end.
 
         Args:
             x_end (float): The x coordinate at which to truncate the PLF.
@@ -131,8 +138,9 @@ class PLF:
         return PLF([])
 
     def __add__(self, other: "PLF") -> "PLF":
-        """Adds the other function to self. The result will be returned
-        and self will not be modified.
+        """Adds the other function to self.
+
+        The result will be returned and self will not be modified.
 
         Args:
             other (PLF): The other function to add to self.
@@ -145,8 +153,9 @@ class PLF:
         return PLF(new_points)
 
     def __sub__(self, other: "PLF") -> "PLF":
-        """Subtracts the other function from self. The result will be returned
-        and self will not be modified.
+        """Subtracts the other function from self.
+
+        The result will be returned and self will not be modified.
 
         Args:
             other (PLF): The other function to subtract from self.
@@ -159,8 +168,11 @@ class PLF:
         return PLF(new_points)
 
     def transformed(self, mirror: bool, offset: float) -> "PLF":
-        """Creates a new PLF that is offset on the x-Axis and optionally mirrored on the y-Axis.
-        Note that the function will first be mirrored and then offset.
+        """Used for creating shifted and mirrored PLFs.
+
+        The new PLF is offset on the x-Axis and optionally mirrored on the y-Axis.
+        Note that the function will first be mirrored and then offset, meaning that
+        positive offset values will shift the function to the right.
 
         Args:
             mirror (bool): Whether the function should first be mirrored on the y-Axis.
@@ -171,7 +183,8 @@ class PLF:
         """
         new_points: list[Point] = []
         factor = -1 if mirror else 1
-        # iterate over the points in the order in which they'll be in the transformed function
+        # iterate over the points in the order in which they'll be
+        # in the transformed PLF
         points = iter(self.points) if mirror else reversed(self.points)
         for point in points:
             new_x = factor * point.x + offset
@@ -202,9 +215,11 @@ class PLF:
 
 
 def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
-    """Matches and returns two PLFs. After matching the PLFs, they will have the same number
-    of points and the points of those two functions will always be defined at the same x
-    coordinates. The given PLFs will not be modified.
+    """Matches two PLFs and returns the result.
+
+    After matching the PLFs, they will have the same number of points and the points of
+    those two functions will always be defined at the same x coordinates. The given
+    PLFs will not be modified.
 
     Returns:
         tuple["PLF", "PLF"]: The matched functions.
@@ -222,8 +237,8 @@ def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
         # x coordinates, so we can stop here
         return a, b
 
-    # both functions have at least 2 points
-    # Note that even if one has exactly 2 points, the other one might have more than that
+    # both functions have at least 2 points. Note that even if one has exactly
+    # 2 points, the other one might have more than that
     new_a = [a.points[0]]
     new_b = [b.points[0]]
     a_idx = 1

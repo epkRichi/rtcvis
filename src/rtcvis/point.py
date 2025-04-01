@@ -1,6 +1,7 @@
 class Point:
     def __init__(self, x: float, y: float) -> None:
         """A 2D point with coordinates x and y.
+
         Objects of this class should not be mutated.
 
         Args:
@@ -26,9 +27,9 @@ class Point:
 
 
 def point_on_line(a: Point, b: Point, x: float) -> Point:
-    """Creates a new point that is located on the straight line that runs through
-    points a and b at the given x. Note that a and b are not allowed to have the
-    same x coordinates.
+    """Creates a new point on the line from a through b.
+
+    Note that a and b are not allowed to have the same x coordinates.
 
     Args:
         a (Point): First point

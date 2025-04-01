@@ -7,7 +7,9 @@ from rtcvis.conv import ConvType, conv, conv_at_x
 
 
 def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
-    """Plots a convolution using matplotlib. The plot is interactive: The user can
+    """Plots a convolution using matplotlib.
+
+    The plot is interactive: The user can
     enter the x for which to compute the convolution using a slider. The plot will
     show the transformed PLF a, PLF b and the sum/difference of those two. It will
     optionally also plot the PLF showing the full result of the convolution.

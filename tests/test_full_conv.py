@@ -4,7 +4,9 @@ from rtcvis.conv import get_critical_points
 
 def test_critical_points_1():
     # cp will return the points for a being shifted to the right (confusing, ik)
-    cp = lambda a, b: get_critical_points(b, a, ConvType.MAX_PLUS_DECONV, None, None)
+    def cp(a, b):
+        return get_critical_points(b, a, ConvType.MAX_PLUS_DECONV, None, None)
+
     assert cp(PLF([]), PLF([])) == []
     assert cp(PLF([(0, 0)]), PLF([])) == []
     assert cp(PLF([]), PLF([(0, 0)])) == []
@@ -23,7 +25,9 @@ def test_critical_points_1():
 
 def test_critical_points_2():
     # cp will return the points for a being shifted to the right (confusing, ik)
-    cp = lambda a, b: get_critical_points(b, a, ConvType.MAX_PLUS_DECONV, 0, None)
+    def cp(a, b):
+        return get_critical_points(b, a, ConvType.MAX_PLUS_DECONV, 0, None)
+
     assert cp(PLF([]), PLF([])) == []
     assert cp(PLF([(0, 0)]), PLF([])) == []
     assert cp(PLF([]), PLF([(0, 0)])) == []
@@ -58,7 +62,8 @@ def test_min_plus_conv_1():
 
 def test_min_plus_conv_2():
     conv_type = ConvType.MIN_PLUS_CONV
-    # convex PLFs that start at (0,0) -> reordering of segments in the order of least slope
+    # convex PLFs that start at (0,0)
+    # -> reordering of segments in the order of least slope
     a = PLF([(0, 0), (2.5, 1), (6, 5.5)])
     b = PLF([(0, 0), (4, 1), (6.5, 5.5)])
     result = conv(a, b, conv_type)
