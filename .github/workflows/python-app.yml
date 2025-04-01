@@ -34,5 +34,4 @@ jobs:
         pytest
     - name: Typecheck with mypy
       run: |
-        mypy . --exclude .venv
-        
+        mypy
