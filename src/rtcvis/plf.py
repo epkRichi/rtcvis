@@ -1,7 +1,7 @@
 from typing import Sequence
 
 from rtcvis.point import Point
-from rtcvis.line import Line
+from rtcvis.line import Line, line_intersection
 
 
 class PLF:
@@ -311,41 +311,46 @@ def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
     return PLF(new_a), PLF(new_b)
 
 
-# def plf_max(a: PLF, b: PLF) -> PLF:
-#     """Computes the maximum of two PLFs.
+def plf_max(a: PLF, b: PLF) -> PLF:
+    """Computes the maximum of two PLFs.
 
-#     The returned PLF will have the value of max(a(x), b(x)) for all x for which a and
-#     b are both defined. It will be undefined at all other points.
+    The returned PLF will have the value of max(a(x), b(x)) for all x for which a and
+    b are both defined. It will be undefined at all other points.
 
-#     Args:
-#         a (PLF): First PLF.
-#         b (PLF): Second PLF.
+    Args:
+        a (PLF): First PLF.
+        b (PLF): Second PLF.
 
-#     Returns:
-#         PLF: The maximum of a and b.
-#     """
-#     a, b = match_plf(a, b)
-#     new_points = []
+    Returns:
+        PLF: The maximum of a and b.
+    """
+    a, b = match_plf(a, b)
 
-#     for i in range(len(a.points) - 1):
-#         # append the point with the greater y
-#         if a.y[i] >= b.y[i]:
-#             new_points.append(a.points[i])
-#         else:
-#             new_points.append(b.points[i])
+    if len(a.points) == 0:
+        # return if a and b were not overlapping
+        return a
 
-#         # check for an intersection in the next line segment
-#         intersection = line_intersection(
-#             Line(a.points[i], a.points[i + 1]), Line(b.points[i], b.points[i + 1])
-#         )
-#         if intersection and intersection.x > a.x[i] and intersection.x < a.x[i + 1]:
-#             # there is an intersection and it's not at the start or end of the segment
-#             new_points.append(intersection)
+    new_points = []
 
-#     # also add the last point
-#     new_points.append(a.points[-1] if a.y[-1] > b.y[-1] else b.points[-1])
+    for i in range(len(a.points) - 1):
+        # append the point with the greater y
+        if a.y[i] >= b.y[i]:
+            new_points.append(a.points[i])
+        else:
+            new_points.append(b.points[i])
 
-#     result = PLF(new_points)
+        # check for an intersection in the next line segment
+        intersection = line_intersection(
+            Line(a.points[i], a.points[i + 1]), Line(b.points[i], b.points[i + 1])
+        )
+        if intersection and intersection.x > a.x[i] and intersection.x < a.x[i + 1]:
+            # there is an intersection and it's not at the start or end of the segment
+            new_points.append(intersection)
 
-#     # The PLF might still have redundant points, remove them
-#     return result.simplified()
+    # also add the last point
+    new_points.append(a.points[-1] if a.y[-1] > b.y[-1] else b.points[-1])
+
+    result = PLF(new_points)
+
+    # The PLF might still have redundant points, remove them
+    return result.simplified()
