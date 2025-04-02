@@ -260,27 +260,21 @@ def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
     Returns:
         tuple["PLF", "PLF"]: The matched functions.
     """
-    if len(a.points) == 0 or len(b.points) == 0:
-        return PLF([]), PLF([])
-
     # Truncate the functions so they start/end at the same x coordinates
     a = a.start_truncated(b.x_start).end_truncated(b.x_end)
     b = b.start_truncated(a.x_start).end_truncated(a.x_end)
 
-    if len(a.points) <= 1:
-        # If either function now has at most 1 point, the other function will
-        # already have the same number of points and they'll be at the same
-        # x coordinates, so we can stop here
-        return a, b
+    if len(a.points) == 0 or len(b.points) == 0:
+        # the functions are not overlapping -> return empty PLFs
+        return PLF([]), PLF([])
 
-    # both functions have at least 2 points. Note that even if one has exactly
-    # 2 points, the other one might have more than that
-    new_a = [a.points[0]]
-    new_b = [b.points[0]]
-    a_idx = 1
-    b_idx = 1
-
-    while True:
+    # iterate over the points of a and b, add their points and insert a new point for a
+    # or b if it does not have a point at an x where the other PLF does have a point
+    # When inserting a new point, we need to know the previous point so that we can
+    # compute a new point on the line from the previous to the next point
+    new_a, new_b = [], []
+    a_idx, b_idx = 0, 0
+    while a_idx < len(a.points) and b_idx < len(b.points):
         a_x = a.points[a_idx].x
         b_x = b.points[b_idx].x
 
@@ -293,21 +287,29 @@ def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
         elif a_x < b_x:
             # Insert a new point for b
             new_a.append(a.points[a_idx])
-            new_b.append(Line(b.points[b_idx], new_b[-1]).point_at_x(a.points[a_idx].x))
+            new_b.append(
+                Line(b.points[b_idx - 1], b.points[b_idx]).point_at_x(a.points[a_idx].x)
+            )
             a_idx += 1
         else:
             # Insert a new point for a
-            new_a.append(Line(a.points[a_idx], new_a[-1]).point_at_x(b.points[b_idx].x))
+            new_a.append(
+                Line(a.points[a_idx], a.points[a_idx - 1]).point_at_x(b.points[b_idx].x)
+            )
             new_b.append(b.points[b_idx])
             b_idx += 1
 
-        # stop if we've just added the last point of both functions
-        stop_a = a_idx == len(a.points)
-        stop_b = b_idx == len(b.points)
-        if stop_a and stop_b:
-            break
-
-        assert not (stop_a or stop_b), "Reached one function's end before the other"
+    # If we've reached the end of one PLF, the other one might still have another
+    # point at the same x coordinate which we need to append, which also means that
+    # we must duplicate the last point of the other PLF
+    if a_idx != len(a.points):
+        assert a_idx == len(a.points) - 1
+        new_a.append(a.points[a_idx])
+        new_b.append(new_b[-1])
+    if b_idx != len(b.points):
+        assert b_idx == len(b.points) - 1
+        new_b.append(b.points[b_idx])
+        new_a.append(new_a[-1])
 
     return PLF(new_a), PLF(new_b)
 

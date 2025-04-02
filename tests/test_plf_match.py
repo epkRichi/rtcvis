@@ -86,3 +86,35 @@ def test_11():
     new_a, new_b = match_plf(a, b)
     assert new_a == PLF([(-0.5, 0), (0, 0), (0, 1), (1, 1)])
     assert new_b == PLF([(-0.5, 0), (0, 0.5), (0, 0.5), (1, 1.5)])
+
+
+def test_12():
+    a = PLF([(0, 0), (4, 2), (4, 0)])
+    b = PLF([(0, 0), (4, 3)])
+    new_a, new_b = match_plf(a, b)
+    assert new_a == PLF([(0, 0), (4, 2), (4, 0)])
+    assert new_b == PLF([(0, 0), (4, 3), (4, 3)])
+
+
+def test_13():
+    a = PLF([(0, 0)])
+    b = PLF([(0, 0), (0, 1)])
+    new_a, new_b = match_plf(a, b)
+    assert new_a == PLF([(0, 0), (0, 0)])
+    assert new_b == PLF([(0, 0), (0, 1)])
+
+
+def test_14():
+    a = PLF([(0, 0)])
+    b = PLF([(0, 0), (0, 0)])
+    new_a, new_b = match_plf(a, b)
+    assert new_a == PLF([(0, 0), (0, 0)])
+    assert new_b == PLF([(0, 0), (0, 0)])
+
+
+def test_15():
+    a = PLF([(0, 1), (0.5, 0), (1, 0), (1, 1)])
+    b = PLF([(0, 0), (1, 0), (1, -1)])
+    new_a, new_b = match_plf(a, b)
+    assert new_a == PLF([(0, 1), (0.5, 0), (1, 0), (1, 1)])
+    assert new_b == PLF([(0, 0), (0.5, 0), (1, 0), (1, -1)])
