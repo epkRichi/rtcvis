@@ -1,4 +1,5 @@
 from typing import Sequence
+
 from rtcvis.point import Point
 from rtcvis.line import Line
 
@@ -220,6 +221,33 @@ class PLF:
         """Calls self.get_value(x)."""
         return self.get_value(x)
 
+    def simplified(self) -> "PLF":
+        """Returns an equal PLF with redundant points removed.
+
+        This function returns a copy of this PLF where there are no three subsequent
+        points that are all located on the same line. self will not be modified.
+
+        Returns:
+            PLF: The simplified PLF.
+        """
+        if len(self.points) < 3:
+            # PLFs with len < 3 dont contain any redundant points
+            return self
+
+        # already insert the first point
+        new_points = [self.points[0]]
+
+        # now append all the intermediate points that are not redundant
+        for i in range(len(self.points) - 2):
+            a, b, c = self.points[i], self.points[i + 1], self.points[i + 2]
+            if not (Line(a, b).slope == Line(b, c).slope):
+                new_points.append(b)
+
+        # finally append the last point
+        new_points.append(self.points[-1])
+
+        return PLF(new_points)
+
 
 def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
     """Matches two PLFs and returns the result.
@@ -284,11 +312,22 @@ def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
 
 
 # def plf_max(a: PLF, b: PLF) -> PLF:
+#     """Computes the maximum of two PLFs.
+
+#     The returned PLF will have the value of max(a(x), b(x)) for all x for which a and
+#     b are both defined. It will be undefined at all other points.
+
+#     Args:
+#         a (PLF): First PLF.
+#         b (PLF): Second PLF.
+
+#     Returns:
+#         PLF: The maximum of a and b.
+#     """
 #     a, b = match_plf(a, b)
-#     num_points = len(a.points)
 #     new_points = []
 
-#     for i in range(num_points - 1):
+#     for i in range(len(a.points) - 1):
 #         # append the point with the greater y
 #         if a.y[i] >= b.y[i]:
 #             new_points.append(a.points[i])
@@ -296,5 +335,17 @@ def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
 #             new_points.append(b.points[i])
 
 #         # check for an intersection in the next line segment
-#         intersection = ((a.y[i] - b.y[i]) * (a.y[i+1] - b.y[i+1])) < 0
-#         if intersection:
+#         intersection = line_intersection(
+#             Line(a.points[i], a.points[i + 1]), Line(b.points[i], b.points[i + 1])
+#         )
+#         if intersection and intersection.x > a.x[i] and intersection.x < a.x[i + 1]:
+#             # there is an intersection and it's not at the start or end of the segment
+#             new_points.append(intersection)
+
+#     # also add the last point
+#     new_points.append(a.points[-1] if a.y[-1] > b.y[-1] else b.points[-1])
+
+#     result = PLF(new_points)
+
+#     # The PLF might still have redundant points, remove them
+#     return result.simplified()
