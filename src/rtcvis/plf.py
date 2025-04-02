@@ -1,5 +1,6 @@
 from typing import Sequence
-from rtcvis.point import Point, point_on_line
+from rtcvis.point import Point
+from rtcvis.line import Line
 
 
 class PLF:
@@ -100,9 +101,11 @@ class PLF:
                 points = []
                 if point.x > x_start:
                     # create a new point at x_start if there isn't one already
-                    points = [
-                        point_on_line(self.points[idx - 1], self.points[idx], x_start)
-                    ]
+                    new_point = Line(self.points[idx - 1], self.points[idx]).point_at_x(
+                        x_start
+                    )
+                    assert new_point is not None
+                    points = [new_point]
                 # append all remaining points
                 points += self.points[idx:]
                 return PLF(points)
@@ -129,9 +132,11 @@ class PLF:
                 points = []
                 if point.x < x_end:
                     # create a new point at x_end if there isn't one already
-                    points = [
-                        point_on_line(self.points[idx + 1], self.points[idx], x_end)
-                    ]
+                    new_point = Line(self.points[idx + 1], self.points[idx]).point_at_x(
+                        x_end
+                    )
+                    assert new_point is not None
+                    points = [new_point]
                 # prepend all remaining points
                 points = list(self.points[: idx + 1]) + points
                 return PLF(points)
@@ -206,7 +211,9 @@ class PLF:
             if p.x == x:
                 return p.y
             elif p.x > x:
-                return point_on_line(self.points[idx - 1], self.points[idx], x).y
+                p_at_x = Line(self.points[idx - 1], self.points[idx]).point_at_x(x)
+                assert p_at_x is not None
+                return p_at_x.y
         raise RuntimeError("Did not find points with corresponding x coordinates")
 
     def __call__(self, x: float) -> float:
@@ -257,11 +264,11 @@ def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
         elif a_x < b_x:
             # Insert a new point for b
             new_a.append(a.points[a_idx])
-            new_b.append(point_on_line(b.points[b_idx], new_b[-1], a.points[a_idx].x))
+            new_b.append(Line(b.points[b_idx], new_b[-1]).point_at_x(a.points[a_idx].x))
             a_idx += 1
         else:
             # Insert a new point for a
-            new_a.append(point_on_line(a.points[a_idx], new_a[-1], b.points[b_idx].x))
+            new_a.append(Line(a.points[a_idx], new_a[-1]).point_at_x(b.points[b_idx].x))
             new_b.append(b.points[b_idx])
             b_idx += 1
 
@@ -274,3 +281,20 @@ def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
         assert not (stop_a or stop_b), "Reached one function's end before the other"
 
     return PLF(new_a), PLF(new_b)
+
+
+# def plf_max(a: PLF, b: PLF) -> PLF:
+#     a, b = match_plf(a, b)
+#     num_points = len(a.points)
+#     new_points = []
+
+#     for i in range(num_points - 1):
+#         # append the point with the greater y
+#         if a.y[i] >= b.y[i]:
+#             new_points.append(a.points[i])
+#         else:
+#             new_points.append(b.points[i])
+
+#         # check for an intersection in the next line segment
+#         intersection = ((a.y[i] - b.y[i]) * (a.y[i+1] - b.y[i+1])) < 0
+#         if intersection:
