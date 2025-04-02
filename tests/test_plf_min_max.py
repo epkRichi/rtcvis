@@ -1,8 +1,83 @@
-from rtcvis import *
+import pytest
+
+from rtcvis.plf import PLF, plf_min_max
 
 
-def test_1():
-    assert PLF([(0, 0), (1, 1)]).min == Point(0, 0)
-    assert PLF([(0, 0), (1, 1)]).max == Point(1, 1)
-    assert PLF([(-5, -1), (1, 1), (1, -1.5), (30, 1.1)]).min == Point(1, -1.5)
-    assert PLF([(-5, -1), (1, 1), (1, -1.5), (30, 1.1)]).max == Point(30, 1.1)
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        ([], [(0, 1), (1, 3)], []),
+        ([(1, 1)], [(1, 1.2)], [(1, 1.2)]),
+        ([(1, 1), (2, 1)], [(1, 1.2), (2, 1.2)], [(1, 1.2), (2, 1.2)]),
+        (
+            [(0, 0), (1, 0), (2, 1)],
+            [(0, 0), (1, 1), (2, 0)],
+            [(0, 0), (1, 1), (1.5, 0.5), (2, 1)],
+        ),
+        (
+            [(0, 0), (1, 1), (2, 0)],
+            [(0, 1), (1, 0), (2, 1)],
+            [(0, 1), (0.5, 0.5), (1, 1), (1.5, 0.5), (2, 1)],
+        ),
+        (
+            [(0, -1), (1, 1), (2, 1), (3, 0), (4, 1), (5, 0), (6, 1)],
+            [(0, 0), (6, 0)],
+            [(0, 0), (0.5, 0), (1, 1), (2, 1), (3, 0), (4, 1), (5, 0), (6, 1)],
+        ),
+        (
+            [(0, 1), (2, -1), (3, 0), (4, -1), (5, 0), (6, -1), (7, 0)],
+            [(0, 0), (7, 0)],
+            [(0, 1), (1, 0), (7, 0)],
+        ),
+    ],
+)
+def test_plf_max_normal(a, b, expected):
+    plf_a = PLF(a)
+    plf_b = PLF(b)
+    plf_expected = PLF(expected)
+    result = plf_min_max(plf_a, plf_b, False)
+    assert result == plf_expected
+
+
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        ([], [(0, 1), (1, 3)], []),
+        ([(1, 1)], [(1, 1.2)], [(1, 1)]),
+        ([(1, 1), (2, 1)], [(1, 1.2), (2, 1.2)], [(1, 1), (2, 1)]),
+        (
+            [(0, 0), (1, 0), (2, 1)],
+            [(0, 0), (1, 1), (2, 0)],
+            [(0, 0), (1, 0), (1.5, 0.5), (2, 0)],
+        ),
+        (
+            [(0, 0), (1, 1), (2, 0)],
+            [(0, 1), (1, 0), (2, 1)],
+            [(0, 0), (0.5, 0.5), (1, 0), (1.5, 0.5), (2, 0)],
+        ),
+        (
+            [(0, -1), (1, 1), (2, 1), (3, 0), (4, 1), (5, 0), (6, 1)],
+            [(0, 0), (6, 0)],
+            [(0, -1), (0.5, 0), (6, 0)],
+        ),
+        (
+            [(0, 1), (2, -1), (3, 0), (4, -1), (5, 0), (6, -1), (7, 0)],
+            [(0, 0), (7, 0)],
+            [(0, 0), (1, 0), (2, -1), (3, 0), (4, -1), (5, 0), (6, -1), (7, 0)],
+        ),
+    ],
+)
+def test_plf_min_normal(a, b, expected):
+    plf_a = PLF(a)
+    plf_b = PLF(b)
+    plf_expected = PLF(expected)
+    result = plf_min_max(plf_a, plf_b, True)
+    assert result == plf_expected
+
+
+@pytest.mark.parametrize("a", [[], [(0, 0)], [(0, 0), (1, 1), (2, 1), (3, 0)]])
+@pytest.mark.parametrize("compute_min", [True, False])
+def test_plf_min_max_identical(a, compute_min):
+    plf_a = PLF(a)
+    result = plf_min_max(plf_a, plf_a, compute_min)
+    assert result == plf_a

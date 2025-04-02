@@ -1,4 +1,5 @@
 from typing import Sequence
+import operator
 
 from rtcvis.point import Point
 from rtcvis.line import Line, line_intersection
@@ -311,18 +312,21 @@ def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
     return PLF(new_a), PLF(new_b)
 
 
-def plf_max(a: PLF, b: PLF) -> PLF:
-    """Computes the maximum of two PLFs.
+def plf_min_max(a: PLF, b: PLF, compute_min: bool) -> PLF:
+    """Computes the minimum or maximum of two PLFs.
 
-    The returned PLF will have the value of max(a(x), b(x)) for all x for which a and
-    b are both defined. It will be undefined at all other points.
+    The returned PLF will have the value of min(a(x), b(x)) if compute_min=True or
+    max(a(x), b(x)) if compute_min=False for all x for which a and b are both defined.
+    It will be undefined at all other points.
 
     Args:
         a (PLF): First PLF.
         b (PLF): Second PLF.
+        compute_min (bool): If True, the resulting function will be the minimum of a
+            and b, else it will be the maximum.
 
     Returns:
-        PLF: The maximum of a and b.
+        PLF: The minimum/maximum of a and b.
     """
     a, b = match_plf(a, b)
 
@@ -330,11 +334,14 @@ def plf_max(a: PLF, b: PLF) -> PLF:
         # return if a and b were not overlapping
         return a
 
+    # get the <= or >= operator
+    compare = operator.le if compute_min else operator.ge
+
     new_points = []
 
     for i in range(len(a.points) - 1):
-        # append the point with the greater y
-        if a.y[i] >= b.y[i]:
+        # append the point with the smaller/greater y
+        if compare(a.y[i], b.y[i]):
             new_points.append(a.points[i])
         else:
             new_points.append(b.points[i])
@@ -348,7 +355,7 @@ def plf_max(a: PLF, b: PLF) -> PLF:
             new_points.append(intersection)
 
     # also add the last point
-    new_points.append(a.points[-1] if a.y[-1] > b.y[-1] else b.points[-1])
+    new_points.append(a.points[-1] if compare(a.y[-1], b.y[-1]) else b.points[-1])
 
     result = PLF(new_points)
 
