@@ -202,6 +202,9 @@ class PLF:
     def get_value(self, x: float) -> float:
         """Computes and returns the value of this PLF at the given x.
 
+        Note that if there are two points defined at the same x, the value of the first
+        one will be returned.
+
         Args:
             x (float): x coordinate
 
@@ -241,6 +244,8 @@ class PLF:
         # now append all the intermediate points that are not redundant
         for i in range(len(self.points) - 2):
             a, b, c = self.points[i], self.points[i + 1], self.points[i + 2]
+            if a == b or b == c:
+                continue
             if not (Line(a, b).slope == Line(b, c).slope):
                 new_points.append(b)
 
@@ -272,6 +277,8 @@ def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
     # or b if it does not have a point at an x where the other PLF does have a point
     # When inserting a new point, we need to know the previous point so that we can
     # compute a new point on the line from the previous to the next point
+    # Note that constructing the Line objects here is fine, the two points can never be
+    # at the same x (I think)
     new_a, new_b = [], []
     a_idx, b_idx = 0, 0
     while a_idx < len(a.points) and b_idx < len(b.points):
@@ -349,12 +356,15 @@ def plf_min_max(a: PLF, b: PLF, compute_min: bool) -> PLF:
             new_points.append(b.points[i])
 
         # check for an intersection in the next line segment
-        intersection = line_intersection(
-            Line(a.points[i], a.points[i + 1]), Line(b.points[i], b.points[i + 1])
-        )
-        if intersection and intersection.x > a.x[i] and intersection.x < a.x[i + 1]:
-            # there is an intersection and it's not at the start or end of the segment
-            new_points.append(intersection)
+        # Skip this step if a or b have two points at the same x, creating Lines and
+        # checking for intersections wouldn't make sense or even work
+        if a.points[i].x != a.points[i + 1].x and b.points[i].x != b.points[i + 1].x:
+            intersection = line_intersection(
+                Line(a.points[i], a.points[i + 1]), Line(b.points[i], b.points[i + 1])
+            )
+            if intersection and intersection.x > a.x[i] and intersection.x < a.x[i + 1]:
+                # there's an intersection and it's not at the start/end of the segment
+                new_points.append(intersection)
 
     # also add the last point
     new_points.append(a.points[-1] if compare(a.y[-1], b.y[-1]) else b.points[-1])
