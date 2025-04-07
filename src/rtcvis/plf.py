@@ -229,30 +229,42 @@ class PLF:
         """Returns an equal PLF with redundant points removed.
 
         This function returns a copy of this PLF where there are no three subsequent
-        points that are all located on the same line. self will not be modified.
+        points that are all located on the same line or at the exact same coordinates.
+        self will not be modified.
 
         Returns:
             PLF: The simplified PLF.
         """
-        if len(self.points) < 3:
-            # PLFs with len < 3 dont contain any redundant points
+        if len(self.points) <= 1:
+            # if we have at most 1 points, there are no redundant points
             return self
 
+        # go over self.points and remove all duplicate points
+        dedup = [self.points[0]]
+        for i in range(len(self.points) - 1):
+            if self.points[i] != self.points[i + 1]:
+                dedup.append(self.points[i + 1])
+
+        if len(dedup) < 3:
+            # if there's at most 2 points left, they cannot be redundant
+            return PLF(dedup)
+
         # already insert the first point
-        new_points = [self.points[0]]
+        new_points = [dedup[0]]
 
         # now append all the intermediate points that are not redundant
-        for i in range(len(self.points) - 2):
-            a, b, c = self.points[i], self.points[i + 1], self.points[i + 2]
-            if a == b or b == c:
-                continue
-            if not (Line(a, b).slope == Line(b, c).slope):
+        for i in range(len(dedup) - 2):
+            a, b, c = dedup[i], dedup[i + 1], dedup[i + 2]
+            if Line(a, b).slope != Line(b, c).slope:
                 new_points.append(b)
 
         # finally append the last point
-        new_points.append(self.points[-1])
+        new_points.append(dedup[-1])
 
         return PLF(new_points)
+
+    def add_point(self, other: Point) -> "PLF":
+        return PLF([Point(p.x + other.x, p.y + other.y) for p in self.points])
 
 
 def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
@@ -373,3 +385,73 @@ def plf_min_max(a: PLF, b: PLF, compute_min: bool) -> PLF:
 
     # The PLF might still have redundant points, remove them
     return result.simplified()
+
+
+def plf_merge(a: PLF, b: PLF) -> PLF:
+    """Returns a PLF that has the value of a everywhere it's and else the value of b.
+
+    Note that a and b must be overlapping or at least touching.
+
+    Args:
+        a (PLF): The dominant PLF.
+        b (PLF): The other PLF.
+
+    Returns:
+        PLF: The result of merging a and b.
+    """
+    # If one of the PLFs is empty, return the other
+    if not len(a.points):
+        return b
+    if not len(b.points):
+        return a
+
+    # The PLFs are not empty -> check that they're overlapping
+    assert b.x_start <= a.x_end and b.x_end >= a.x_start
+    # The general idea is to just take b from its start to a.x_start
+    # and from a.x_end to its end. But we might have to remove some
+    # points at the starts/ends because there may only be two points
+    # at the same x
+
+    # get b from its start until a.x_start
+    if b.x_start < a.x_start:
+        b_end_truncated = b.end_truncated(a.x_start)
+        start_points = list(b_end_truncated.points)
+        # remove the last point if there's another point at that x
+        if len(start_points) >= 2 and b_end_truncated.x[-2] == b_end_truncated.x[-1]:
+            start_points.pop(-1)
+    else:
+        start_points = []
+
+    # get b from a.x_end until b's end
+    if b.x_end > a.x_end:
+        b_start_truncated = b.start_truncated(a.x_end)
+        end_points = list(b_start_truncated.points)
+        # remove the first point if there's another point at that x
+        if len(end_points) >= 2 and b_start_truncated.x[0] == b_start_truncated.x[1]:
+            end_points.pop(0)
+    else:
+        end_points = []
+
+    # the middle part is the part that's defined by a
+    middle_points = list(a.points)
+    # remove the first point if there's another point at that x and there start_points
+    if start_points and len(middle_points) >= 2 and a.x[0] == a.x[1]:
+        middle_points.pop(0)
+    # remove the last point if there's another point at that x and there are end_points
+    if end_points and len(middle_points) >= 2 and a.x[-2] == a.x[-1]:
+        middle_points.pop(-1)
+
+    # now just concatenate all point lists
+    return PLF(start_points + middle_points + end_points)
+
+
+def plf_list_min_max(plfs: Sequence[PLF], compute_min: bool) -> PLF:
+    result = plfs[0]
+    for plf in plfs[1:]:
+        new_min_max = plf_min_max(a=result, b=plf, compute_min=compute_min)
+        merged = plf_merge(
+            plf_merge(new_min_max, result),
+            plf,
+        )
+        result = merged
+    return result
