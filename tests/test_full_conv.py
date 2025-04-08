@@ -1,48 +1,4 @@
-from rtcvis import PLF, ConvType
-from rtcvis.conv import get_critical_points
-from rtcvis.new_conv import conv
-
-
-def test_critical_points_1():
-    # cp will return the points for a being shifted to the right (confusing, ik)
-    def cp(a, b):
-        return get_critical_points(b, a, ConvType.MAX_PLUS_DECONV, None, None)
-
-    assert cp(PLF([]), PLF([])) == []
-    assert cp(PLF([(0, 0)]), PLF([])) == []
-    assert cp(PLF([]), PLF([(0, 0)])) == []
-    assert cp(PLF([(0, 1)]), PLF([(0, 5)])) == [0]
-    assert cp(PLF([(-1, 1)]), PLF([(0, 5)])) == [1]
-    assert cp(PLF([(1, 1)]), PLF([(0, 5)])) == [-1]
-    assert cp(PLF([(1, 1)]), PLF([(0, 5), (1, 5)])) == [-1, 0]
-    assert cp(PLF([(1, 1)]), PLF([(0, 5), (1, 5)])) == [-1, 0]
-    assert cp(PLF([(0, 5), (1, 5)]), PLF([(1, 1)])) == [0, 1]
-    assert cp(PLF([(0, 5), (1, 5)]), PLF([(0.5, 1), (1.5, 3)])) == [
-        -0.5,
-        0.5,
-        1.5,
-    ]
-
-
-def test_critical_points_2():
-    # cp will return the points for a being shifted to the right (confusing, ik)
-    def cp(a, b):
-        return get_critical_points(b, a, ConvType.MAX_PLUS_DECONV, 0, None)
-
-    assert cp(PLF([]), PLF([])) == []
-    assert cp(PLF([(0, 0)]), PLF([])) == []
-    assert cp(PLF([]), PLF([(0, 0)])) == []
-    assert cp(PLF([(0, 1)]), PLF([(0, 5)])) == [0]
-    assert cp(PLF([(-1, 1)]), PLF([(0, 5)])) == [1]
-    assert cp(PLF([(1, 1)]), PLF([(0, 5)])) == []
-    assert cp(PLF([(1, 1)]), PLF([(0, 5), (1, 5)])) == [0]
-    assert cp(PLF([(1, 1)]), PLF([(0, 5), (1, 5)])) == [0]
-    assert cp(PLF([(0, 5), (1, 5)]), PLF([(1, 1)])) == [0, 1]
-    assert cp(PLF([(0, 5), (1, 5)]), PLF([(0.5, 1), (1.5, 3)])) == [
-        0,
-        0.5,
-        1.5,
-    ]
+from rtcvis import PLF, ConvType, conv
 
 
 def test_min_plus_conv_1():
