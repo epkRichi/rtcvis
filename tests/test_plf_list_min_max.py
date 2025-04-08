@@ -17,5 +17,6 @@ from rtcvis.plf import plf_list_min_max
 )
 def test_plf_list_min(plfs, expected):
     plfs_plf = [PLF(plf) for plf in plfs]
+    expected_plf = PLF(expected)
     result = plf_list_min_max(plfs_plf, compute_min=True)
-    assert result == expected
+    assert result == expected_plf
