@@ -88,6 +88,20 @@ def test_min_plus_conv_2():
     assert result(12.5) == 2 + 3.5 * (9 / 7) + 2.5 * (9 / 5)
 
 
+def test_min_plus_conv_3():
+    conv_type = ConvType.MIN_PLUS_CONV
+    a = PLF([(0, 1.5), (0, 2), (1, 1), (2, 1)])
+    b = PLF([(0, 0.5), (0.5, 1), (1, 0), (2, 0)])
+    expected = PLF([(0, 2), (0.25, 2.25), (1, 1.5), (1.5, 1.5), (2, 1)])
+    result = conv(
+        a,
+        b,
+        conv_type,
+    )
+    simplified = result.simplified()
+    assert simplified == expected
+
+
 def test_max_plus_conv_1():
     conv_type = ConvType.MAX_PLUS_CONV
     a = PLF([(0, 2), (5, 4.5)])
@@ -128,3 +142,27 @@ def test_max_plus_deconv_1():
     assert result(1) == 1.25
     assert result(2) == 1.5
     assert result(3) == 1.75
+
+
+def test_max_plus_deconv_2():
+    conv_type = ConvType.MAX_PLUS_DECONV
+    a = PLF(
+        [
+            (0, 0),
+            (8, 8),
+            (8, 7),
+            (11, 10),
+            (11, 8),
+            (12, 9),
+            (12, 8),
+            (13, 9),
+            (13, 7),
+            (15, 7),
+            (15, 4),
+        ]
+    )
+    b = PLF([(0, 0), (15, 0)])
+    result = conv(a, b, conv_type, 0)
+    simplified = result.simplified()
+    expected = PLF([(0, 0), (4, 4), (15, 4)])
+    assert simplified == expected
