@@ -263,8 +263,23 @@ class PLF:
 
         return PLF(new_points)
 
-    def add_point(self, other: Point) -> "PLF":
-        return PLF([Point(p.x + other.x, p.y + other.y) for p in self.points])
+    def add_point(self, other: Point, subtract_x: bool, subtract_y: bool) -> "PLF":
+        """Adds the given point to all points of self.
+
+        The coordinates of the other point will be added to the coordinates of all
+        Points of this PLF. Returns a new PLF instead of modifying self.
+
+        Args:
+            other (Point): The Point to add to this PLF.
+            subtract_x (bool): Whether to instead subtract other.x from the points.
+            subtract_y (bool): Whether to instead subtract other.y from the points.
+
+        Returns:
+            PLF: The resulting PLF.
+        """
+        x_op = operator.sub if subtract_x else operator.add
+        y_op = operator.sub if subtract_y else operator.add
+        return PLF([Point(x_op(p.x, other.x), y_op(p.y, other.y)) for p in self.points])
 
 
 def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:

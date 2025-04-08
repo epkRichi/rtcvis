@@ -11,6 +11,6 @@ from rtcvis import *
         (PLF([(-1, 2), (1, -2)]), Point(3, 5), PLF([(2, 7), (4, 3)])),
     ],
 )
-def test_add_point(plf: PLF, p: Point, expected: PLF):
-    result = plf.add_point(p)
+def test_add_point_xplus_yplus(plf: PLF, p: Point, expected: PLF):
+    result = plf.add_point(p, False, False)
     assert result == expected

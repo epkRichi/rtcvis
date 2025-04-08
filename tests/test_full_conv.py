@@ -1,5 +1,6 @@
-from rtcvis import *
+from rtcvis import PLF, ConvType
 from rtcvis.conv import get_critical_points
+from rtcvis.new_conv import conv
 
 
 def test_critical_points_1():
@@ -64,28 +65,11 @@ def test_min_plus_conv_2():
     conv_type = ConvType.MIN_PLUS_CONV
     # convex PLFs that start at (0,0)
     # -> reordering of segments in the order of least slope
-    a = PLF([(0, 0), (2.5, 1), (6, 5.5)])
-    b = PLF([(0, 0), (4, 1), (6.5, 5.5)])
+    a = PLF([(0, 0), (2.5, 1), (5, 6)])  # slope 0.25, 2.0
+    b = PLF([(0, 0), (4, 2), (5, 3)])  # slope 0.5, 1
     result = conv(a, b, conv_type)
-    assert result.x_start == 0
-    assert result.x_end == b.x_end + a.x_end
-    # segment 1 (b)
-    assert result(0) == 0
-    assert result(1) == 0.25
-    assert result(2) == 0.5
-    assert result(4) == 1
-    # segment 2 (a)
-    assert result(5) == 1.4
-    assert result(6) == 1.8
-    assert result(6.5) == 2
-    # segment 3 (b)
-    assert result(7.5) == 2 + 1 * (9 / 7)  # why did I choose such ugly numbers?
-    assert result(8.5) == 2 + 2 * (9 / 7)
-    assert result(10) == 2 + 3.5 * (9 / 7)
-    # Segment 4 (a)
-    assert result(11) == 2 + 3.5 * (9 / 7) + 1 * (9 / 5)
-    assert result(12) == 2 + 3.5 * (9 / 7) + 2 * (9 / 5)
-    assert result(12.5) == 2 + 3.5 * (9 / 7) + 2.5 * (9 / 5)
+    expected = PLF([(0, 0), (2.5, 1), (6.5, 3), (7.5, 4), (10, 9)])
+    assert result == expected
 
 
 def test_min_plus_conv_3():
@@ -93,13 +77,8 @@ def test_min_plus_conv_3():
     a = PLF([(0, 1.5), (0, 2), (1, 1), (2, 1)])
     b = PLF([(0, 0.5), (0.5, 1), (1, 0), (2, 0)])
     expected = PLF([(0, 2), (0.25, 2.25), (1, 1.5), (1.5, 1.5), (2, 1)])
-    result = conv(
-        a,
-        b,
-        conv_type,
-    )
-    simplified = result.simplified()
-    assert simplified == expected
+    result = conv(a, b, conv_type, start=0, stop=2)
+    assert result == expected
 
 
 def test_max_plus_conv_1():
@@ -120,7 +99,7 @@ def test_max_plus_conv_1():
 
 def test_min_plus_deconv_1():
     conv_type = ConvType.MIN_PLUS_DECONV
-    a = PLF([(0, 2), (12, 5)])  # slope 0.25
+    a = PLF([(0, 2), (5, 3.25)])  # slope 0.25
     b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
     result = conv(a, b, conv_type, 0)
     assert result.x_start == 0
