@@ -6,9 +6,21 @@ from rtcvis.plf import PLF, plf_min_max
 @pytest.mark.parametrize(
     "a,b,expected",
     [
-        ([], [(0, 1), (1, 3)], []),
-        ([(1, 1)], [(1, 1.2)], [(1, 1.2)]),
-        ([(1, 1), (2, 1)], [(1, 1.2), (2, 1.2)], [(1, 1.2), (2, 1.2)]),
+        (
+            [],
+            [(0, 1), (1, 3)],
+            [],
+        ),
+        (
+            [(1, 1)],
+            [(1, 1.2)],
+            [(1, 1.2)],
+        ),
+        (
+            [(1, 1), (2, 1)],
+            [(1, 1.2), (2, 1.2)],
+            [(1, 1.2), (2, 1.2)],
+        ),
         (
             [(0, 0), (1, 0), (2, 1)],
             [(0, 0), (1, 1), (2, 0)],
@@ -47,9 +59,21 @@ def test_plf_max_normal(a, b, expected):
 @pytest.mark.parametrize(
     "a,b,expected",
     [
-        ([], [(0, 1), (1, 3)], []),
-        ([(1, 1)], [(1, 1.2)], [(1, 1)]),
-        ([(1, 1), (2, 1)], [(1, 1.2), (2, 1.2)], [(1, 1), (2, 1)]),
+        (
+            [],
+            [(0, 1), (1, 3)],
+            [],
+        ),
+        (
+            [(1, 1)],
+            [(1, 1.2)],
+            [(1, 1)],
+        ),
+        (
+            [(1, 1), (2, 1)],
+            [(1, 1.2), (2, 1.2)],
+            [(1, 1), (2, 1)],
+        ),
         (
             [(0, 0), (1, 0), (2, 1)],
             [(0, 0), (1, 1), (2, 0)],
@@ -77,14 +101,7 @@ def test_plf_max_normal(a, b, expected):
         ),
         (
             [(0, 2), (0, 2.5), (1, 1.5), (2, 1.5)],
-            [
-                (0, 2),
-                (0.5, 2.5),
-                (1, 1.5),
-                (1.75, 1.5),
-                (2, 1),
-                (4, 1),
-            ],
+            [(0, 2), (0.5, 2.5), (1, 1.5), (1.75, 1.5), (2, 1), (4, 1)],
             [(0, 2), (0.25, 2.25), (1, 1.5), (1.75, 1.5), (2, 1)],
         ),
         # Same thing but with duplicate points
@@ -114,9 +131,15 @@ def test_plf_min_normal(a, b, expected):
     assert result == plf_expected
 
 
-@pytest.mark.parametrize("a", [[], [(0, 0)], [(0, 0), (1, 1), (2, 1), (3, 0)]])
+@pytest.mark.parametrize(
+    "a",
+    [
+        PLF([]),
+        PLF([(0, 0)]),
+        PLF([(0, 0), (1, 1), (2, 1), (3, 0)]),
+    ],
+)
 @pytest.mark.parametrize("compute_min", [True, False])
 def test_plf_min_max_identical(a, compute_min):
-    plf_a = PLF(a)
-    result = plf_min_max(plf_a, plf_a, compute_min)
-    assert result == plf_a
+    result = plf_min_max(a, a, compute_min)
+    assert result == a

@@ -2,16 +2,21 @@ from rtcvis import *
 import pytest
 
 
-def test_1():
+@pytest.mark.parametrize(
+    "plf,x",
+    [
+        (PLF([]), 0),
+        (PLF([(-1, 0)]), 0),
+        (PLF([(1, 0)]), 0),
+        (PLF([(1, 0), (3, 5)]), 0.9),
+    ],
+)
+def test_plf_get_value_invalid(plf: PLF, x: float):
     with pytest.raises(AssertionError):
-        PLF([]).get_value(0)
-    with pytest.raises(AssertionError):
-        PLF([(-1, 0)]).get_value(0)
-    with pytest.raises(AssertionError):
-        PLF([(1, 0)]).get_value(0)
+        plf.get_value(x)
 
 
-def test_2():
+def test_plf_get_value():
     assert PLF([(5, 3)]).get_value(5) == 3
     a = PLF([(-1, 0), (0, 1), (1, -1)])
     assert a.get_value(-1) == 0

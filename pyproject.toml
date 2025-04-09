@@ -11,8 +11,15 @@ description = "Tool for visualizing Real Time Calculus (RTC) operations"
 dependencies = ["numpy", "matplotlib"]
 requires-python = ">=3.12"
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+rtcvis = ["py.typed"]
+
 [project.optional-dependencies]
 dev = ["pytest", "pre-commit"]
 
 [tool.mypy]
 files = ["src/rtcvis", "tests", "example.py"]
+exclude = "(^\\.venv/|^\\.git/|^build/|^dist/)"
