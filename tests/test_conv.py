@@ -1,117 +1,137 @@
-from rtcvis import *
+import pytest
+from rtcvis import PLF, ConvType, conv, conv_at_x
+
+min_conv_test_cases = [
+    (
+        PLF([(0, 2), (5, 4.5)]),
+        PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)]),
+        PLF([(0, 2), (1, 2), (10, 6.5)]),
+    ),
+    (
+        PLF([(0, 0), (2.5, 1), (5, 6)]),
+        PLF([(0, 0), (4, 2), (5, 3)]),
+        PLF([(0, 0), (2.5, 1), (6.5, 3), (7.5, 4), (10, 9)]),
+    ),
+    (
+        PLF([(0, 1.5), (0, 2), (1, 1), (2, 1)]),
+        PLF([(0, 0.5), (0.5, 1), (1, 0), (2, 0)]),
+        PLF([(0, 2), (0.25, 2.25), (1, 1.5), (1.5, 1.5), (2, 1), (4, 1)]),
+    ),
+]
 
 
-def test_min_plus_conv_1():
-    a = PLF([(0, 2), (5, 4.5)])
-    b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    conv_type = ConvType.MIN_PLUS_CONV
-    assert conv_at_x(a, b, 0, conv_type).result.y == 2
-    assert conv_at_x(a, b, 0.5, conv_type).result.y == 2
-    assert conv_at_x(a, b, 1, conv_type).result.y == 2
-    assert conv_at_x(a, b, 1.5, conv_type).result.y == 2.25
-    assert conv_at_x(a, b, 2, conv_type).result.y == 2.5
-    assert conv_at_x(a, b, 2.5, conv_type).result.y == 2.75
-    assert conv_at_x(a, b, 3, conv_type).result.y == 3
-
-
-def test_min_plus_conv_2():
-    # convex PLFs that start at (0,0)
-    # -> reordering of segments in the order of least slope
-    a = PLF([(0, 0), (2.5, 1), (6, 5.5)])
-    b = PLF([(0, 0), (4, 1), (6.5, 5.5)])
-    conv_type = ConvType.MIN_PLUS_CONV
-    # segment 1 (b)
-    assert conv_at_x(a, b, 0, conv_type).result.y == 0
-    assert conv_at_x(a, b, 1, conv_type).result.y == 0.25
-    assert conv_at_x(a, b, 2, conv_type).result.y == 0.5
-    assert conv_at_x(a, b, 4, conv_type).result.y == 1
-    # segment 2 (a)
-    assert conv_at_x(a, b, 5, conv_type).result.y == 1.4
-    assert conv_at_x(a, b, 6, conv_type).result.y == 1.8
-    assert conv_at_x(a, b, 6.5, conv_type).result.y == 2
-    # segment 3 (b)
-    assert conv_at_x(a, b, 7.5, conv_type).result.y == 2 + 1 * (
-        9 / 7
-    )  # why did I choose such ugly numbers?
-    assert conv_at_x(a, b, 8.5, conv_type).result.y == 2 + 2 * (9 / 7)
-    assert conv_at_x(a, b, 10, conv_type).result.y == 2 + 3.5 * (9 / 7)
-    # Segment 4 (a)
-    assert conv_at_x(a, b, 11, conv_type).result.y == 2 + 3.5 * (9 / 7) + 1 * (9 / 5)
-    assert conv_at_x(a, b, 12, conv_type).result.y == 2 + 3.5 * (9 / 7) + 2 * (9 / 5)
-    assert conv_at_x(a, b, 12.5, conv_type).result.y == 2 + 3.5 * (9 / 7) + 2.5 * (
-        9 / 5
+max_conv_test_cases = [
+    (
+        PLF([(0, 2), (5, 4.5)]),
+        PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)]),
+        PLF([(0, 2), (9, 6.5), (10, 6.5)]),
     )
+]
 
 
-def test_min_plus_conv_3():
-    a = PLF([(0, 1.5), (0, 2), (1, 1), (2, 1)])
-    b = PLF([(0, 0.5), (0.5, 1), (1, 0), (2, 0)])
-    conv_type = ConvType.MIN_PLUS_CONV
-    assert conv_at_x(a, b, 0, conv_type).result.y == 2
-    assert conv_at_x(a, b, 0.125, conv_type).result.y == 2.125
-    assert conv_at_x(a, b, 0.25, conv_type).result.y == 2.25
-    assert conv_at_x(a, b, 0.5, conv_type).result.y == 2
-    assert conv_at_x(a, b, 1, conv_type).result.y == 1.5
-    assert conv_at_x(a, b, 1.25, conv_type).result.y == 1.5
-    assert conv_at_x(a, b, 1.5, conv_type).result.y == 1.5
-    assert conv_at_x(a, b, 1.75, conv_type).result.y == 1.25
-    assert conv_at_x(a, b, 2, conv_type).result.y == 1
-
-
-def test_max_plus_conv_1():
-    a = PLF([(0, 2), (5, 4.5)])
-    b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    conv_type = ConvType.MAX_PLUS_CONV
-    assert conv_at_x(a, b, 0, conv_type).result.y == 2
-    assert conv_at_x(a, b, 0.5, conv_type).result.y == 2.25
-    assert conv_at_x(a, b, 1, conv_type).result.y == 2.5
-    assert conv_at_x(a, b, 1.5, conv_type).result.y == 2.75
-    assert conv_at_x(a, b, 2, conv_type).result.y == 3
-    assert conv_at_x(a, b, 2.5, conv_type).result.y == 3.25
-    assert conv_at_x(a, b, 3, conv_type).result.y == 3.5
-
-
-def test_min_plus_deconv_1():
-    a = PLF([(0, 2), (12, 5)])  # slope 0.25
-    b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    conv_type = ConvType.MIN_PLUS_DECONV
-    assert conv_at_x(a, b, 0, conv_type).result.y == 2.25
-    assert conv_at_x(a, b, 1, conv_type).result.y == 2.5
-    assert conv_at_x(a, b, 2, conv_type).result.y == 2.75
-    assert conv_at_x(a, b, 3, conv_type).result.y == 3
-
-
-def test_max_plus_deconv_1():
-    a = PLF([(0, 2), (12, 5)])  # slope 0.25
-    b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    conv_type = ConvType.MAX_PLUS_DECONV
-    assert conv_at_x(a, b, 0, conv_type).result.y == 1
-    assert conv_at_x(a, b, 1, conv_type).result.y == 1.25
-    assert conv_at_x(a, b, 2, conv_type).result.y == 1.5
-    assert conv_at_x(a, b, 3, conv_type).result.y == 1.75
-
-
-def test_max_plus_deconv_2():
-    a = PLF(
-        [
-            (0, 0),
-            (8, 8),
-            (8, 7),
-            (11, 10),
-            (11, 8),
-            (12, 9),
-            (12, 8),
-            (13, 9),
-            (13, 7),
-            (15, 7),
-            (15, 4),
-        ]
+min_deconv_test_cases = [
+    (
+        PLF([(0, 2), (5, 3.25)]),
+        PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)]),
+        PLF([(0, 2.25), (4, 3.25), (5, 3.25)]),
     )
-    b = PLF([(0, 0), (15, 0)])
-    conv_type = ConvType.MAX_PLUS_DECONV
-    assert conv_at_x(a, b, 0, conv_type).result.y == 0
-    assert conv_at_x(a, b, 3.9, conv_type).result.y == 3.9
-    assert conv_at_x(a, b, 4, conv_type).result.y == 4
-    assert conv_at_x(a, b, 4.1, conv_type).result.y == 4
-    assert conv_at_x(a, b, 15, conv_type).result.y == 4
-    # expected = PLF([(0, 0), (4, 4), (15, 4)])
+]
+
+
+max_deconv_test_cases = [
+    (
+        PLF(
+            [
+                (0, 0),
+                (8, 8),
+                (8, 7),
+                (11, 10),
+                (11, 8),
+                (12, 9),
+                (12, 8),
+                (13, 9),
+                (13, 7),
+                (15, 7),
+                (15, 4),
+            ]
+        ),
+        PLF([(0, 0), (15, 0)]),
+        PLF([(0, 0), (4, 4), (15, 4)]),
+    ),
+]
+
+
+@pytest.mark.parametrize("a,b,expected", min_conv_test_cases)
+def test_min_plus_conv(a: PLF, b: PLF, expected: PLF):
+    result = conv(a=a, b=b, conv_type=ConvType.MIN_PLUS_CONV)
+    assert result == expected
+
+
+@pytest.mark.parametrize("a,b,expected", max_conv_test_cases)
+def test_max_plus_conv(a: PLF, b: PLF, expected: PLF):
+    result = conv(a=a, b=b, conv_type=ConvType.MAX_PLUS_CONV)
+    assert result == expected
+
+
+@pytest.mark.parametrize("a,b,expected", min_deconv_test_cases)
+def test_min_plus_deconv(a: PLF, b: PLF, expected: PLF):
+    result = conv(a=a, b=b, conv_type=ConvType.MIN_PLUS_DECONV, start=0)
+    assert result == expected
+
+
+@pytest.mark.parametrize("a,b,expected", max_deconv_test_cases)
+def test_max_plus_deconv(a: PLF, b: PLF, expected: PLF):
+    result = conv(a=a, b=b, conv_type=ConvType.MAX_PLUS_DECONV, start=0)
+    assert result == expected
+
+
+def conv_at_x_helper(a: PLF, b: PLF, expected: PLF, conv_type: ConvType):
+    """Helper for testing the conv_at_x function.
+
+    Samples some points of the expected result and checks whether the result of calling
+    conv_at_x is the same.
+
+    Args:
+        a (PLF): First PLF.
+        b (PLF): Second PLF.
+        expected (PLF): Expected result.
+        conv_type (ConvType): The type of convolution.
+    """
+    POINTS_PER_INTERVAL = 3
+    compute_min = conv_type in (ConvType.MIN_PLUS_CONV, ConvType.MAX_PLUS_DECONV)
+    op = min if compute_min else max
+    for p1, p2 in zip(expected.points[:], expected.points[1:]):
+        if p1.x == p2.x:
+            # two points at the same x -> check the y coordinate of the correct one
+            y_result = conv_at_x(a=a, b=b, delta_x=p1.x, conv_type=conv_type).result.y
+            y_expected = op(p1.y, p2.y)
+            assert y_result == y_expected
+        else:
+            # points at different x -> check some points between them
+            interval_len = p2.x - p1.x
+            step_size = interval_len / (POINTS_PER_INTERVAL + 1)
+            steps = [p1.x + (i + 1) * step_size for i in range(POINTS_PER_INTERVAL)]
+            for x in steps:
+                y_result = conv_at_x(a=a, b=b, delta_x=x, conv_type=conv_type).result.y
+                y_expected = expected.get_value(x)
+                assert y_result == y_expected
+
+
+@pytest.mark.parametrize("a,b,expected", min_conv_test_cases)
+def test_min_plus_conv_at_x(a: PLF, b: PLF, expected: PLF):
+    conv_at_x_helper(a=a, b=b, expected=expected, conv_type=ConvType.MIN_PLUS_CONV)
+
+
+@pytest.mark.parametrize("a,b,expected", max_conv_test_cases)
+def test_max_plus_conv_at_x(a: PLF, b: PLF, expected: PLF):
+    conv_at_x_helper(a=a, b=b, expected=expected, conv_type=ConvType.MAX_PLUS_CONV)
+
+
+@pytest.mark.parametrize("a,b,expected", min_deconv_test_cases)
+def test_min_plus_deconv_at_x(a: PLF, b: PLF, expected: PLF):
+    conv_at_x_helper(a=a, b=b, expected=expected, conv_type=ConvType.MIN_PLUS_DECONV)
+
+
+@pytest.mark.parametrize("a,b,expected", max_deconv_test_cases)
+def test_max_plus_deconv_at_x(a: PLF, b: PLF, expected: PLF):
+    conv_at_x_helper(a=a, b=b, expected=expected, conv_type=ConvType.MAX_PLUS_DECONV)
