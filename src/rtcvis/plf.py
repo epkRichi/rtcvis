@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Union
 import operator
 
 from rtcvis.point import Point
@@ -144,7 +144,13 @@ class PLF:
                 return PLF(points)
         return PLF([])
 
-    def __add__(self, other: "PLF") -> "PLF":
+    def __add__(self, other: Union["PLF", Point]) -> "PLF":
+        if isinstance(other, PLF):
+            return self.add_plf(other)
+        else:
+            return self.add_point(other, False, False)
+
+    def add_plf(self, other: "PLF") -> "PLF":
         """Adds the other function to self.
 
         The result will be returned and self will not be modified.
