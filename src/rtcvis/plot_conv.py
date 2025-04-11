@@ -6,6 +6,45 @@ from rtcvis.plf import PLF
 from rtcvis.conv import ConvType, conv, conv_at_x
 
 
+class ConvProperties:
+    def __init__(self, a: PLF, b: PLF, conv_type: ConvType):
+        # allow computing the convolution for all x>=0 upto the point where a and b no
+        # longer overlap
+        PADDING = 0.5
+        self.slider_min = 0
+        is_deconv = conv_type in (ConvType.MAX_PLUS_DECONV, ConvType.MIN_PLUS_DECONV)
+        if is_deconv:
+            min_deconv_result = conv(
+                a=a, b=b, conv_type=ConvType.MIN_PLUS_DECONV, start=0
+            )
+            max_deconv_result = conv(
+                a=a, b=b, conv_type=ConvType.MAX_PLUS_DECONV, start=0
+            )
+            self.min_x = (a.x_start - a.x_end) + b.x_start - PADDING
+            self.max_x = max(a.x_end, b.x_end) + PADDING
+            self.min_y = max_deconv_result.min.y - PADDING
+            self.max_y = min_deconv_result.max.y + PADDING
+            self.slider_max = a.x_end - b.x_start
+            self.result = (
+                min_deconv_result
+                if conv_type == ConvType.MIN_PLUS_CONV
+                else max_deconv_result
+            )
+        else:
+            min_conv_result = conv(a=a, b=b, conv_type=ConvType.MIN_PLUS_CONV, start=0)
+            max_conv_result = conv(a=a, b=b, conv_type=ConvType.MAX_PLUS_CONV, start=0)
+            self.min_x = min(-a.x_end, b.x_start) - PADDING
+            self.max_x = b.x_end + (a.x_end - a.x_start) + PADDING
+            self.min_y = min_conv_result.min.y - PADDING
+            self.max_y = max_conv_result.max.y + PADDING
+            self.slider_max = b.x_end + a.x_end
+            self.result = (
+                min_conv_result
+                if conv_type == ConvType.MIN_PLUS_CONV
+                else max_conv_result
+            )
+
+
 def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
     """Plots a convolution using matplotlib.
 
@@ -20,7 +59,7 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
         conv_type (ConvType): The type of convolution.
         plot_full_result (bool): Whether to also plot the full result.
     """
-    assert a.x_start == 0 and b.x_start == 0 and a.x_end == b.x_end
+    conv_properties = ConvProperties(a=a, b=b, conv_type=conv_type)
 
     color_a = mcolors.TABLEAU_COLORS["tab:olive"]
     color_b = mcolors.TABLEAU_COLORS["tab:orange"]
@@ -44,7 +83,7 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
         ax=axdeltax,
         label="x",
         valmin=0,
-        valmax=a.x_end,
+        valmax=conv_properties.slider_max,
         valinit=initial_x,
         valfmt="%.2f",
     )
@@ -62,7 +101,7 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
 
     if plot_full_result:
         # plot full result of convolution
-        conv_plf = conv(a, b, conv_type, 0, a.x_end)
+        conv_plf = conv_properties.result
         ax.plot(conv_plf.x, conv_plf.y, label="full result", color=color_result)
         # add marker for where we're currently at
         (graph_result_marker,) = ax.plot(
@@ -125,7 +164,8 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
 
     # add legend
     ax.legend(loc="upper left")
-    ax.set_xlim(-a.x_end, a.x_end)
+    ax.set_xlim(conv_properties.min_x, conv_properties.max_x)
+    ax.set_ylim(conv_properties.min_y, conv_properties.max_y)
     ax.set_title(str(conv_type))
 
     plt.show()
