@@ -300,6 +300,7 @@ class PLF:
         Returns:
             PLF: The floored version of self.
         """
+        # TODO handle PLFs with less than 2 points
         new_points: list[Point] = []
 
         # the point from which to start the next stair of slope 0
@@ -356,7 +357,7 @@ class PLF:
         if prev_point.x != self.x[-1]:
             new_points += (prev_point, Point(self.x[-1], prev_point.y))
 
-        return PLF([])
+        return PLF(new_points)
 
 
 def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
