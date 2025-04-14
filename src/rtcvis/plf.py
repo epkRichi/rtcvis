@@ -300,11 +300,16 @@ class PLF:
         Returns:
             PLF: The floored version of self.
         """
-        # TODO handle PLFs with less than 2 points
+        if len(self.points) == 0:
+            return self
+
         new_points: list[Point] = []
 
         # the point from which to start the next stair of slope 0
         prev_point = Point(self.x[0], int(self.y[0]))
+
+        if len(self.points) == 1:
+            return PLF([prev_point])
 
         # iterate over all line segments in the PLF and build stairs
         for p1, p2 in zip(self.points[:], self.points[1:]):
