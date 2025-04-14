@@ -288,25 +288,27 @@ class PLF:
         y_op = operator.sub if subtract_y else operator.add
         return PLF([Point(x_op(p.x, other.x), y_op(p.y, other.y)) for p in self.points])
 
-    def floored(self) -> "PLF":
-        """Computes a floored version of self.
+    def integerized(self, floor: bool) -> "PLF":
+        """Computes the floored or ceiled version of self.
 
-        The returned function will have the value of math.floor(self(x)) for (almost)
-        all x. The only exceptions to this are the start and end of the PLF: if self
-        starts with two points at the same x coordinates, the first one will be
-        ignored. If self ends with two points at the same x coordinates, the last one
-        will be ignored.
+        The returned function will have the value of math.floor(self(x)) or
+        math.ceil(self(x)) for (almost) all x. The only exceptions to this are the
+        start and end of the PLF: if self starts with two points at the same x
+        coordinates, the first one will be ignored. If self ends with two points at the
+        same x coordinates, the last one will be ignored.
 
         Returns:
-            PLF: The floored version of self.
+            PLF: The floored/ceiled version of self.
         """
         if len(self.points) == 0:
             return self
 
+        to_int = math.floor if floor else math.ceil
+
         new_points: list[Point] = []
 
         # the point from which to start the next stair of slope 0
-        prev_point = Point(self.x[0], int(self.y[0]))
+        prev_point = Point(self.x[0], to_int(self.y[0]))
 
         if len(self.points) == 1:
             return PLF([prev_point])
@@ -321,16 +323,16 @@ class PLF:
 
             if slope is None:
                 # the line is vertical
-                if prev_point.y != int(p2.y):
+                if prev_point.y != to_int(p2.y):
                     # There is a jump here that goes over an integer
                     if prev_point.x != p1.x:
                         # We have already started a new stair on the previous line
-                        # segment end the new segment here
+                        # segment - end the new segment here
                         new_points += [prev_point, Point(p1.x, prev_point.y)]
                     # now reset prev_point since we did a jump on the y-axis
-                    prev_point = Point(p2.x, int(p2.y))
+                    prev_point = Point(p2.x, to_int(p2.y))
                 # there is no jump there, which means that the next line will start at
-                # the same floored y coordinate
+                # the same int y coordinate
                 # now continue because we don't need to construct any stairs on the
                 # line from p1 to p2 (it's vertical)
                 continue
@@ -349,6 +351,7 @@ class PLF:
 
             # Compute the number of stairs on this line segment. It could be 0, any
             # integer > 0 or any real number in between.
+            # Note that 0 < first_stair_len <= stair_len
             number_of_stairs = math.ceil((p2.x - p1.x - first_stair_len) / stair_len)
 
             # add all the stairs to new_points.
@@ -363,6 +366,34 @@ class PLF:
             new_points += (prev_point, Point(self.x[-1], prev_point.y))
 
         return PLF(new_points)
+
+    def floored(self) -> "PLF":
+        """Computes a floored version of self.
+
+        The returned function will have the value of math.floor(self(x)) for (almost)
+        all x. The only exceptions to this are the start and end of the PLF: if self
+        starts with two points at the same x coordinates, the first one will be
+        ignored. If self ends with two points at the same x coordinates, the last one
+        will be ignored.
+
+        Returns:
+            PLF: The floored version of self.
+        """
+        return self.integerized(floor=True)
+
+    def ceiled(self) -> "PLF":
+        """Computes a ceiled version of self.
+
+        The returned function will have the value of math.ceil(self(x)) for (almost)
+        all x. The only exceptions to this are the start and end of the PLF: if self
+        starts with two points at the same x coordinates, the first one will be
+        ignored. If self ends with two points at the same x coordinates, the last one
+        will be ignored.
+
+        Returns:
+            PLF: The ceiled version of self.
+        """
+        return self.integerized(floor=False)
 
 
 def match_plf(a: "PLF", b: "PLF") -> tuple["PLF", "PLF"]:
