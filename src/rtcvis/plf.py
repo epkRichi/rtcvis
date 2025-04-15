@@ -292,89 +292,88 @@ class PLF:
         """Computes the floored or ceiled version of self.
 
         The returned function will have the value of math.floor(self(x)) or
-        math.ceil(self(x)) for (almost) all x. The only exceptions to this are the
-        start and end of the PLF: if self starts with two points at the same x
-        coordinates, the first one will be ignored. If self ends with two points at the
-        same x coordinates, the last one will be ignored.
+        math.ceil(self(x)) for all x.
 
         Returns:
             PLF: The floored/ceiled version of self.
         """
-        if len(self.points) == 0:
-            return self
-
         to_int = math.floor if floor else math.ceil
 
         new_points: list[Point] = []
 
-        # the point from which to start the next stair of slope 0
-        prev_point = Point(self.x[0], to_int(self.y[0]))
+        if len(self.points) == 1 or (len(self.points) >= 2 and self.x[0] == self.x[1]):
+            # handle PLFs that contain just one point and PLFs with a discontinuity at
+            # the start
+            new_points.append(Point(self.x[0], to_int(self.y[0])))
 
-        if len(self.points) == 1:
-            return PLF([prev_point])
-
-        # iterate over all line segments in the PLF and build stairs
-        for p1, p2 in zip(self.points[:], self.points[1:]):
-            slope = Line(p1, p2).slope
-
-            if slope == 0:
-                # the line has slope 0, lets skip it
-                continue
+        # go over the individual line segments and integerize them
+        for p1, p2 in zip(self.points, self.points[1:]):
+            line = Line(p1, p2)
+            slope = line.slope
 
             if slope is None:
-                # the line is vertical
-                if prev_point.y != to_int(p2.y):
-                    # There is a jump here that goes over an integer
-                    if prev_point.x != p1.x:
-                        # We have already started a new stair on the previous line
-                        # segment - end the new segment here
-                        new_points += [prev_point, Point(p1.x, prev_point.y)]
-                    # now reset prev_point since we did a jump on the y-axis
-                    prev_point = Point(p2.x, to_int(p2.y))
-                # there is no jump there, which means that the next line will start at
-                # the same int y coordinate
-                # now continue because we don't need to construct any stairs on the
-                # line from p1 to p2 (it's vertical)
+                # vertical line -> skip
                 continue
 
-            # build stairs
+            if slope == 0:
+                # build just one stair
+                stair_y = to_int(p1.y)
+                new_points += [Point(p1.x, stair_y), Point(p2.x, stair_y)]
+                continue
+
+            # build several stairs
+
+            # compute y coordinate of the first stair
+            if slope > 0:
+                first_y = math.floor(p1.y) + int(not floor)
+            else:  # slope < 0
+                first_y = math.ceil(p1.y) - int(floor)
 
             # compute length of one stair on this line and whether it goes up or down
-            stair_len = 1 / slope
+            stair_len = abs(1 / slope)
             stair_dy = int(slope > 0)
 
             # p1.y might not be an integer, meaning that we're not right at the start of
             # a stair. So compute the end of the first stair/start of the second stair.
-            first_stair_progress = p1.y - int(p1.y)
+            # Note that
+            # 1) 0 <= first_stair_progress < 1
+            # 2) 0 < first_stair_len <= stair_len
+            if slope > 0:
+                first_stair_progress = p1.y - math.floor(p1.y)
+            else:  # slope < 0
+                first_stair_progress = math.ceil(p1.y) - p1.y
             first_stair_len = (1 - first_stair_progress) * stair_len
             first_stair_end = p1.x + first_stair_len
 
             # Compute the number of stairs on this line segment. It could be 0, any
             # integer > 0 or any real number in between.
             # Note that 0 < first_stair_len <= stair_len
-            number_of_stairs = math.ceil((p2.x - p1.x - first_stair_len) / stair_len)
+            # Note that
+            # 1) (p2.x - p1.x) > 0
+            # 2) -stair_len < (p2.x - p1.x - first_stair_len)
+            # 3) math.ceil((p2.x - p1.x - first_stair_len) / stair_len) >= 0
+            # 4) number_of_stairs >= 1
+            number_of_stairs = (
+                math.ceil((p2.x - p1.x - first_stair_len) / stair_len) + 1
+            )
 
             # add all the stairs to new_points.
-            # Also set prev_point to the start of the next stair.
             for i in range(number_of_stairs):
-                new_point = Point(first_stair_end + i * stair_len, prev_point.y)
-                new_points += [prev_point, new_point]
-                prev_point = Point(new_point.x, new_point.y + stair_dy)
+                stair_y = first_y + i * stair_dy
+                x1 = max(p1.x, first_stair_end + stair_len * (i - 1))
+                x2 = min(p2.x, first_stair_end + stair_len * i)
+                new_points += [Point(x1, stair_y), Point(x2, stair_y)]
 
-        # now finally check whether we've already finished the previous stair
-        if prev_point.x != self.x[-1]:
-            new_points += (prev_point, Point(self.x[-1], prev_point.y))
+        if len(self.points) >= 2 and self.x[-2] == self.x[-1]:
+            # handle discontinuity at end
+            new_points.append(Point(self.x[-1], to_int(self.y[-1])))
 
-        return PLF(new_points)
+        return PLF(new_points).simplified()
 
     def floored(self) -> "PLF":
         """Computes a floored version of self.
 
-        The returned function will have the value of math.floor(self(x)) for (almost)
-        all x. The only exceptions to this are the start and end of the PLF: if self
-        starts with two points at the same x coordinates, the first one will be
-        ignored. If self ends with two points at the same x coordinates, the last one
-        will be ignored.
+        The returned function will have the value of math.floor(self(x)) for all x.
 
         Returns:
             PLF: The floored version of self.
@@ -384,11 +383,7 @@ class PLF:
     def ceiled(self) -> "PLF":
         """Computes a ceiled version of self.
 
-        The returned function will have the value of math.ceil(self(x)) for (almost)
-        all x. The only exceptions to this are the start and end of the PLF: if self
-        starts with two points at the same x coordinates, the first one will be
-        ignored. If self ends with two points at the same x coordinates, the last one
-        will be ignored.
+        The returned function will have the value of math.ceil(self(x)) for all x.
 
         Returns:
             PLF: The ceiled version of self.

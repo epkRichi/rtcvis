@@ -72,8 +72,11 @@ from rtcvis import *
         # PLF with discontinuity at start and end
         (
             PLF([(0, 0.3), (0, 2.1), (1, 2.5), (2, 3.5), (2, 4.5)]),
-            PLF([(0, 2), (1.5, 2), (1.5, 3), (2, 3)]),
+            PLF([(0, 0), (0, 2), (1.5, 2), (1.5, 3), (2, 3), (2, 4)]),
         ),
+        # PLF with discontinuity at start and end which both get floored to the
+        # intermediate line
+        (PLF([(0, 0.1), (0, 0), (1, 0), (1, 0.5)]), PLF([(0, 0), (1, 0)])),
     ],
 )
 def test_plf_floored(plf: PLF, expected: PLF):
@@ -151,8 +154,11 @@ def test_plf_floored(plf: PLF, expected: PLF):
         # PLF with discontinuity at start and end
         (
             PLF([(0, 0.3), (0, 2.1), (1, 2.5), (2, 3.5), (2, 4.5)]),
-            PLF([(0, 3), (1.5, 3), (1.5, 4), (2, 4)]),
+            PLF([(0, 1), (0, 3), (1.5, 3), (1.5, 4), (2, 4), (2, 5)]),
         ),
+        # PLF with discontinuity at start and end which both get ceiled to the
+        # intermediate line
+        (PLF([(0, 0.1), (0, 1), (1, 1), (1, 0.5)]), PLF([(0, 1), (1, 1)])),
     ],
 )
 def test_plf_ceiled(plf: PLF, expected: PLF):
