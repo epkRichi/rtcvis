@@ -165,7 +165,7 @@ class PLF:
         new_points = [Point(p1.x, p1.y + p2.y) for p1, p2 in zip(a.points, b.points)]
         return PLF(new_points).simplified()
 
-    def __sub__(self, other: "PLF") -> "PLF":
+    def sub_plf(self, other: "PLF") -> "PLF":
         """Subtracts the other function from self.
 
         The result will be returned and self will not be modified.
@@ -174,11 +174,17 @@ class PLF:
             other (PLF): The other function to subtract from self.
 
         Returns:
-            PLF: The sum of the two functions.
+            PLF: The diference between the two functions.
         """
         a, b = match_plf(self, other)
         new_points = [Point(p1.x, p1.y - p2.y) for p1, p2 in zip(a.points, b.points)]
-        return PLF(new_points)
+        return PLF(new_points).simplified()
+
+    def __sub__(self, other: Union["PLF", Point]) -> "PLF":
+        if isinstance(other, PLF):
+            return self.sub_plf(other)
+        else:
+            return self.add_point(other, True, True)
 
     def transformed(self, mirror: bool, offset: float) -> "PLF":
         """Used for creating shifted and mirrored PLFs.
