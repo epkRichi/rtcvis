@@ -30,6 +30,12 @@ from rtcvis import *
             PLF([(-1, 0), (0, 0), (0, 1), (1, 1)]),
             PLF([(-1, 0), (0, 1), (0, 2), (1, 3)]),
         ),
+        # Check that the result is simplified
+        (
+            PLF([(0, 0), (1, 1), (2, 0), (3, 1), (4, 0)]),
+            PLF([(0, 0), (1, -1), (2, 0), (3, -1), (4, 0)]),
+            PLF([(0, 0), (4, 0)]),
+        ),
     ],
 )
 def test_plf_add_plf(a: PLF, b: PLF, expected: PLF):
