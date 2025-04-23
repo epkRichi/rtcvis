@@ -28,6 +28,34 @@ class ConvType(Enum):
             case ConvType.MIN_PLUS_DECONV:
                 return "Min-Plus-Deconvolution"
 
+    def get_latex_formula(self) -> str:
+        """Returns the formula of the convolution as latex code.
+
+        Returns:
+            str: The formula as latex code.
+        """
+        match self:
+            case ConvType.MAX_PLUS_CONV:
+                return (
+                    r"(a \overline{\otimes} b)(x) = "
+                    + r"\text{sup}_{0 \leq \lambda \leq x}\{a(x-\lambda) + b(\lambda)\}"
+                )
+            case ConvType.MAX_PLUS_DECONV:
+                return (
+                    r"(a \overline{\oslash} b)(x) = "
+                    + r"\text{inf}_{\lambda \geq 0}\{a(x + \lambda) - b(\lambda)\}"
+                )
+            case ConvType.MIN_PLUS_CONV:
+                return (
+                    r"(a \otimes b)(x) = "
+                    + r"\text{inf}_{0 \leq \lambda \leq x}\{a(x-\lambda) + b(\lambda)\}"
+                )
+            case ConvType.MIN_PLUS_DECONV:
+                return (
+                    r"(a \oslash b)(x) = "
+                    + r"\text{sup}_{\lambda \geq 0}\{a(x + \lambda) - b(\lambda)\}"
+                )
+
 
 class ConvAtXResult:
     def __init__(self, transformed_a: PLF, sum: PLF, result: Point) -> None:

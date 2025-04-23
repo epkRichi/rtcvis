@@ -166,6 +166,6 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
     ax.legend(loc="upper left")
     ax.set_xlim(conv_properties.min_x, conv_properties.max_x)
     ax.set_ylim(conv_properties.min_y, conv_properties.max_y)
-    ax.set_title(str(conv_type))
+    ax.set_title(f"{conv_type}: ${conv_type.get_latex_formula()}$")
 
     plt.show()
