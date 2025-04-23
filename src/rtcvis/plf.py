@@ -146,43 +146,31 @@ class PLF:
 
     def __add__(self, other: Union["PLF", Point]) -> "PLF":
         if isinstance(other, PLF):
-            return self.add_plf(other)
+            return self.add_plf(other, False)
         else:
             return self.add_point(other, False, False)
 
-    def add_plf(self, other: "PLF") -> "PLF":
+    def add_plf(self, other: "PLF", subtract_y: bool) -> "PLF":
         """Adds the other function to self.
 
         The result will be returned and self will not be modified.
 
         Args:
             other (PLF): The other function to add to self.
+            subtract_y (bool): Whether to instead subtract the y values of other from
+                self.
 
         Returns:
             PLF: The sum of the two functions.
         """
         a, b = match_plf(self, other)
-        new_points = [Point(p1.x, p1.y + p2.y) for p1, p2 in zip(a.points, b.points)]
-        return PLF(new_points).simplified()
-
-    def sub_plf(self, other: "PLF") -> "PLF":
-        """Subtracts the other function from self.
-
-        The result will be returned and self will not be modified.
-
-        Args:
-            other (PLF): The other function to subtract from self.
-
-        Returns:
-            PLF: The diference between the two functions.
-        """
-        a, b = match_plf(self, other)
-        new_points = [Point(p1.x, p1.y - p2.y) for p1, p2 in zip(a.points, b.points)]
+        op = operator.sub if subtract_y else operator.add
+        new_points = [Point(p1.x, op(p1.y, p2.y)) for p1, p2 in zip(a.points, b.points)]
         return PLF(new_points).simplified()
 
     def __sub__(self, other: Union["PLF", Point]) -> "PLF":
         if isinstance(other, PLF):
-            return self.sub_plf(other)
+            return self.add_plf(other, subtract_y=True)
         else:
             return self.add_point(other, True, True)
 
