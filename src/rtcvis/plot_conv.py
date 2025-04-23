@@ -27,7 +27,7 @@ class ConvProperties:
             self.slider_max = a.x_end - b.x_start
             self.result = (
                 min_deconv_result
-                if conv_type == ConvType.MIN_PLUS_CONV
+                if conv_type == ConvType.MIN_PLUS_DECONV
                 else max_deconv_result
             )
         else:
