@@ -297,6 +297,12 @@ class PLF:
         Returns:
             PLF: The floored/ceiled version of self.
         """
+        # FIXME This function should work differently: If a point is located at an
+        # integer y, then this point should also be part of the returned PLF. Right now,
+        # such points may get floored/ceiled together with the following line segment,
+        # putting them at another y. This is only be a problem at the start and end of
+        # the PLF (?)
+
         to_int = math.floor if floor else math.ceil
 
         new_points: list[Point] = []
