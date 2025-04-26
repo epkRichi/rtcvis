@@ -28,7 +28,7 @@ class ConvType(Enum):
             case ConvType.MIN_PLUS_DECONV:
                 return "Min-Plus-Deconvolution"
 
-    def get_latex_formula(self) -> str:
+    def get_descriptions(self) -> tuple[str, str, str, str]:
         """Returns the formula of the convolution as latex code.
 
         Returns:
@@ -37,23 +37,47 @@ class ConvType(Enum):
         match self:
             case ConvType.MAX_PLUS_CONV:
                 return (
-                    r"(a \overline{\otimes} b)(x) = "
-                    + r"\text{sup}_{0 \leq \lambda \leq x}\{a(x-\lambda) + b(\lambda)\}"
+                    r"(a \overline{\otimes} b)(\Delta)",
+                    r"a(\Delta-\lambda)",
+                    r"a(\Delta-\lambda) + b(\lambda)",
+                    (
+                        r"(a \overline{\otimes} b)(\Delta) = "
+                        + r"\text{sup}_{0 \leq \lambda \leq \Delta}"
+                        + r"\{a(\Delta-\lambda) + b(\lambda)\}"
+                    ),
                 )
             case ConvType.MAX_PLUS_DECONV:
                 return (
-                    r"(a \overline{\oslash} b)(x) = "
-                    + r"\text{inf}_{\lambda \geq 0}\{a(x + \lambda) - b(\lambda)\}"
+                    r"(a \overline{\oslash} b)(\Delta)",
+                    r"a(\Delta + \lambda)",
+                    r"a(\Delta + \lambda) - b(\lambda)",
+                    (
+                        r"(a \overline{\oslash} b)(\Delta) = "
+                        + r"\text{inf}_{\lambda \geq 0}"
+                        + r"\{a(\Delta + \lambda) - b(\lambda)\}"
+                    ),
                 )
             case ConvType.MIN_PLUS_CONV:
                 return (
-                    r"(a \otimes b)(x) = "
-                    + r"\text{inf}_{0 \leq \lambda \leq x}\{a(x-\lambda) + b(\lambda)\}"
+                    r"(a \otimes b)(\Delta)",
+                    r"a(\Delta-\lambda)",
+                    r"a(\Delta-\lambda) + b(\lambda)",
+                    (
+                        r"(a \otimes b)(\Delta) = "
+                        + r"\text{inf}_{0 \leq \lambda \leq \Delta}"
+                        + r"\{a(\Delta-\lambda) + b(\lambda)\}"
+                    ),
                 )
             case ConvType.MIN_PLUS_DECONV:
                 return (
-                    r"(a \oslash b)(x) = "
-                    + r"\text{sup}_{\lambda \geq 0}\{a(x + \lambda) - b(\lambda)\}"
+                    r"(a \oslash b)(\Delta)",
+                    r"a(\Delta + \lambda)",
+                    r"a(\Delta + \lambda) - b(\lambda)",
+                    (
+                        r"(a \oslash b)(\Delta) = "
+                        + r"\text{sup}_{\lambda \geq 0}"
+                        + r"\{a(\Delta + \lambda) - b(\lambda)\}"
+                    ),
                 )
 
 

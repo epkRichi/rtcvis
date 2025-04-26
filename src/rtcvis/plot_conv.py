@@ -60,6 +60,7 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
         plot_full_result (bool): Whether to also plot the full result.
     """
     conv_properties = ConvProperties(a=a, b=b, conv_type=conv_type)
+    operator_desc, a_transform_desc, sum_desc, full_desc = conv_type.get_descriptions()
 
     color_a = mcolors.TABLEAU_COLORS["tab:olive"]
     color_b = mcolors.TABLEAU_COLORS["tab:orange"]
@@ -78,10 +79,10 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
 
     # Create bottom slider
     plot_pos = ax.get_position(True)
-    axdeltax = fig.add_axes((plot_pos.x0, plot_pos.y0 - 0.05, plot_pos.width, 0.02))
+    axdeltax = fig.add_axes((plot_pos.x0, plot_pos.y0 - 0.12, plot_pos.width, 0.02))
     deltax_slider = Slider(
         ax=axdeltax,
-        label="x",
+        label=r"$\Delta$",
         valmin=0,
         valmax=conv_properties.slider_max,
         valinit=initial_x,
@@ -92,47 +93,45 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
     (graph_a,) = ax.plot(
         conv_result.transformed_a.x,
         conv_result.transformed_a.y,
-        label="transformed a",
+        label=f"${a_transform_desc}$",
         color=color_a,
     )
 
     # plot b
-    ax.plot(b.x, b.y, label="b", color=color_b)
+    ax.plot(b.x, b.y, label=r"$b(x)$", color=color_b)
+
+    # plot convolution sum
+    (graph_sum,) = ax.plot(
+        conv_result.sum.x,
+        conv_result.sum.y,
+        label=f"${sum_desc}$",
+        color=color_sum,
+    )
+
+    # add marker for conv result
+    (graph_sum_marker,) = ax.plot(
+        [conv_result.result.x],
+        [conv_result.result.y],
+        marker=".",
+        color=color_sum,
+    )
 
     if plot_full_result:
         # plot full result of convolution
         conv_plf = conv_properties.result
-        ax.plot(conv_plf.x, conv_plf.y, label="full result", color=color_result)
+        ax.plot(
+            conv_plf.x,
+            conv_plf.y,
+            label=f"${operator_desc}$",
+            color=color_result,
+        )
         # add marker for where we're currently at
         (graph_result_marker,) = ax.plot(
             [initial_x],
             [conv_plf(initial_x)],
             marker=".",
-            label="result at x",
             color=color_result,
         )
-
-    # plot convolution sum
-    if conv_type in [ConvType.MIN_PLUS_CONV, ConvType.MAX_PLUS_CONV]:
-        sum_label = "sum"
-    else:
-        sum_label = "difference"
-    (graph_sum,) = ax.plot(
-        conv_result.sum.x, conv_result.sum.y, label=sum_label, color=color_sum
-    )
-
-    # add marker for conv result
-    if conv_type in [ConvType.MIN_PLUS_CONV, ConvType.MAX_PLUS_DECONV]:
-        marker_label = f"{sum_label} minimum"
-    else:
-        marker_label = f"{sum_label} maximum"
-    (graph_sum_marker,) = ax.plot(
-        [conv_result.result.x],
-        [conv_result.result.y],
-        marker=".",
-        label=marker_label,
-        color=color_sum,
-    )
 
     # Slider update function
     def update(val):
@@ -166,6 +165,7 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
     ax.legend(loc="upper left")
     ax.set_xlim(conv_properties.min_x, conv_properties.max_x)
     ax.set_ylim(conv_properties.min_y, conv_properties.max_y)
-    ax.set_title(f"{conv_type}: ${conv_type.get_latex_formula()}$")
+    ax.set_title(f"{conv_type}: ${full_desc}$")
+    ax.set_xlabel(r"$\lambda$")
 
     plt.show()
