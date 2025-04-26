@@ -8,10 +8,19 @@ from rtcvis.conv import ConvType, conv, conv_at_x
 
 class ConvProperties:
     def __init__(self, a: PLF, b: PLF, conv_type: ConvType):
+        """Computes several properties needed for plotting convolutions.
+
+        Computes the min and max values for the slider, x axis and y axis as well as
+        the result of the convolution.
+
+        Args:
+            a (PLF): PLF a.
+            b (PLF): PLF b.
+            conv_type (ConvType): The type of convolution.
+        """
         # allow computing the convolution for all x>=0 upto the point where a and b no
         # longer overlap
         PADDING = 0.5
-        self.slider_min = 0
         is_deconv = conv_type in (ConvType.MAX_PLUS_DECONV, ConvType.MIN_PLUS_DECONV)
         if is_deconv:
             min_deconv_result = conv(
@@ -20,10 +29,10 @@ class ConvProperties:
             max_deconv_result = conv(
                 a=a, b=b, conv_type=ConvType.MAX_PLUS_DECONV, start=0
             )
-            self.min_x = (a.x_start - a.x_end) + b.x_start - PADDING
-            self.max_x = max(a.x_end, b.x_end) + PADDING
-            self.min_y = max_deconv_result.min.y - PADDING
-            self.max_y = min_deconv_result.max.y + PADDING
+            conv_min_x = (a.x_start - a.x_end) + b.x_start
+            conv_max_x = max(a.x_end, b.x_end)
+            conv_min_y = max_deconv_result.min.y
+            conv_max_y = min_deconv_result.max.y
             self.slider_max = a.x_end - b.x_start
             self.result = (
                 min_deconv_result
@@ -33,16 +42,23 @@ class ConvProperties:
         else:
             min_conv_result = conv(a=a, b=b, conv_type=ConvType.MIN_PLUS_CONV, start=0)
             max_conv_result = conv(a=a, b=b, conv_type=ConvType.MAX_PLUS_CONV, start=0)
-            self.min_x = min(-a.x_end, b.x_start) - PADDING
-            self.max_x = b.x_end + (a.x_end - a.x_start) + PADDING
-            self.min_y = min_conv_result.min.y - PADDING
-            self.max_y = max_conv_result.max.y + PADDING
+            conv_min_x = min(-a.x_end, b.x_start)
+            conv_max_x = b.x_end + (a.x_end - a.x_start)
+            conv_min_y = min_conv_result.min.y
+            conv_max_y = max_conv_result.max.y
             self.slider_max = b.x_end + a.x_end
             self.result = (
                 min_conv_result
                 if conv_type == ConvType.MIN_PLUS_CONV
                 else max_conv_result
             )
+        ab_min_y = min(a.min.y, b.min.y)
+        ab_max_y = max(a.max.y, b.max.y)
+        self.slider_min = 0
+        self.min_x = conv_min_x - PADDING
+        self.max_x = conv_max_x + PADDING
+        self.min_y = min(ab_min_y, conv_min_y) - PADDING
+        self.max_y = max(ab_max_y, conv_max_y) + PADDING
 
 
 def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
