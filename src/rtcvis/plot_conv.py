@@ -3,7 +3,7 @@ from matplotlib.widgets import Slider, CheckButtons
 import matplotlib.colors as mcolors
 
 from rtcvis.plf import PLF
-from rtcvis.conv import ConvType, conv, conv_at_x
+from rtcvis.conv import ConvType, conv, conv_at_x, LAMBDA, DELTA
 
 
 class ConvProperties:
@@ -64,10 +64,10 @@ class ConvProperties:
 def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
     """Plots a convolution using matplotlib.
 
-    The plot is interactive: The user can
-    enter the x for which to compute the convolution using a slider. The plot will
-    show the transformed PLF a, PLF b, the sum/difference of those two and the full
-    result of the convolution.
+    The plot is interactive: The user can enter the delta for which to compute the
+    convolution using a slider. The plot will show the original PLF a, the transformed
+    PLF a, PLF b, the sum/difference of those two and the full result of the
+    convolution. All functions can individually be toggled in the legend.
 
     Args:
         a (PLF): PLF a.
@@ -75,15 +75,13 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
         conv_type (ConvType): The type of convolution.
     """
     conv_properties = ConvProperties(a=a, b=b, conv_type=conv_type)
-    b_desc, operator_desc, a_transform_desc, sum_desc, full_desc = (
-        conv_type.get_descriptions()
-    )
 
-    color_a = mcolors.TABLEAU_COLORS["tab:olive"]
+    color_a = mcolors.TABLEAU_COLORS["tab:cyan"]
+    color_trans_a = mcolors.TABLEAU_COLORS["tab:olive"]
     color_b = mcolors.TABLEAU_COLORS["tab:orange"]
     color_sum = mcolors.TABLEAU_COLORS["tab:purple"]
     color_result = mcolors.TABLEAU_COLORS["tab:gray"]
-    colors = (color_a, color_b, color_sum, color_result)
+    colors = (color_a, color_trans_a, color_b, color_sum, color_result)
 
     fig, ax = plt.subplots()
     ax.set_aspect("equal", adjustable="box")
@@ -100,29 +98,33 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
     axdeltax = fig.add_axes((plot_pos.x0, plot_pos.y0 - 0.12, plot_pos.width, 0.02))
     deltax_slider = Slider(
         ax=axdeltax,
-        label=r"$\Delta$",
+        label=f"${DELTA}$",
         valmin=0,
         valmax=conv_properties.slider_max,
         valinit=initial_x,
         valfmt="%.2f",
     )
 
+    # plot a (but hide it by default)
+    (graph_a,) = ax.plot(a.x, a.y, label=conv_type.a_desc, color=color_a)
+    graph_a.set_visible(False)
+
     # plot transformed a
-    (graph_a,) = ax.plot(
+    (graph_trans_a,) = ax.plot(
         conv_result.transformed_a.x,
         conv_result.transformed_a.y,
-        label=a_transform_desc,
-        color=color_a,
+        label=conv_type.a_trans_desc,
+        color=color_trans_a,
     )
 
     # plot b
-    (graph_b,) = ax.plot(b.x, b.y, label=b_desc, color=color_b)
+    (graph_b,) = ax.plot(b.x, b.y, label=conv_type.b_desc, color=color_b)
 
     # plot convolution sum
     (graph_sum,) = ax.plot(
         conv_result.sum.x,
         conv_result.sum.y,
-        label=sum_desc,
+        label=conv_type.sum_desc,
         color=color_sum,
     )
 
@@ -139,7 +141,7 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
     (graph_result,) = ax.plot(
         conv_plf.x,
         conv_plf.y,
-        label=operator_desc,
+        label=conv_type.operator_desc,
         color=color_result,
     )
     # add marker for where we're currently at
@@ -151,13 +153,13 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
     )
 
     # Slider update function
-    def update(val):
+    def slider_callback(val):
         # Recompute convolution
         conv_result = conv_at_x(a, b, val, conv_type)
 
         # Update transformed a
-        graph_a.set_xdata(conv_result.transformed_a.x)
-        graph_a.set_ydata(
+        graph_trans_a.set_xdata(conv_result.transformed_a.x)
+        graph_trans_a.set_ydata(
             conv_result.transformed_a.y
         )  # y doesn't really change but hey
 
@@ -176,15 +178,22 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
         fig.canvas.draw_idle()
 
     # register the slider
-    deltax_slider.on_changed(update)
+    deltax_slider.on_changed(slider_callback)
 
     # create legend with check buttons for toggling the visibility
     rax = ax.inset_axes((0.0, 0.0, 0.12, 0.2))
     check = CheckButtons(
         ax=rax,
-        labels=[a_transform_desc, b_desc, sum_desc, operator_desc],
+        labels=[
+            conv_type.a_desc,
+            conv_type.a_trans_desc,
+            conv_type.b_desc,
+            conv_type.sum_desc,
+            conv_type.operator_desc,
+        ],
         actives=[
             graph_a.get_visible(),
+            graph_trans_a.get_visible(),
             graph_b.get_visible(),
             graph_sum.get_visible(),
             graph_result.get_visible(),
@@ -194,24 +203,31 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
         check_props={"facecolor": colors},
     )
 
+    # checkbox update function
     def check_callback(label: str | None):
-        if label == a_transform_desc:
+        if label == conv_type.a_desc:
             graph_a.set_visible(not graph_a.get_visible())
-        elif label == b_desc:
+        elif label == conv_type.a_trans_desc:
+            graph_trans_a.set_visible(not graph_trans_a.get_visible())
+        elif label == conv_type.b_desc:
             graph_b.set_visible(not graph_b.get_visible())
-        elif label == sum_desc:
+        elif label == conv_type.sum_desc:
             graph_sum_marker.set_visible(not graph_sum.get_visible())
             graph_sum.set_visible(not graph_sum.get_visible())
-        elif label == operator_desc:
+        elif label == conv_type.operator_desc:
             graph_result_marker.set_visible(not graph_result.get_visible())
             graph_result.set_visible(not graph_result.get_visible())
         fig.canvas.draw_idle()
 
+    # register the checkboxes
     check.on_clicked(check_callback)
 
+    # set limits, title and xlabel
     ax.set_xlim(conv_properties.min_x, conv_properties.max_x)
     ax.set_ylim(conv_properties.min_y, conv_properties.max_y)
-    ax.set_title(f"{conv_type}: {full_desc}")
-    ax.set_xlabel(r"$\lambda$")
+    ax.set_title(
+        f"{conv_type}: ${conv_type.operator_desc[1:-1]} = {conv_type.full_desc[1:-1]}$"
+    )
+    ax.set_xlabel(f"${LAMBDA}$")
 
     plt.show()
