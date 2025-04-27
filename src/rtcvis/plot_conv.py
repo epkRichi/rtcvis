@@ -61,19 +61,18 @@ class ConvProperties:
         self.max_y = max(ab_max_y, conv_max_y) + PADDING
 
 
-def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
+def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
     """Plots a convolution using matplotlib.
 
     The plot is interactive: The user can
     enter the x for which to compute the convolution using a slider. The plot will
-    show the transformed PLF a, PLF b and the sum/difference of those two. It will
-    optionally also plot the PLF showing the full result of the convolution.
+    show the transformed PLF a, PLF b, the sum/difference of those two and the full
+    result of the convolution.
 
     Args:
         a (PLF): PLF a.
         b (PLF): PLF b.
         conv_type (ConvType): The type of convolution.
-        plot_full_result (bool): Whether to also plot the full result.
     """
     conv_properties = ConvProperties(a=a, b=b, conv_type=conv_type)
     b_desc, operator_desc, a_transform_desc, sum_desc, full_desc = (
@@ -135,22 +134,21 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
         color=color_sum,
     )
 
-    if plot_full_result:
-        # plot full result of convolution
-        conv_plf = conv_properties.result
-        (graph_result,) = ax.plot(
-            conv_plf.x,
-            conv_plf.y,
-            label=operator_desc,
-            color=color_result,
-        )
-        # add marker for where we're currently at
-        (graph_result_marker,) = ax.plot(
-            [initial_x],
-            [conv_plf(initial_x)],
-            marker=".",
-            color=color_result,
-        )
+    # plot full result of convolution
+    conv_plf = conv_properties.result
+    (graph_result,) = ax.plot(
+        conv_plf.x,
+        conv_plf.y,
+        label=operator_desc,
+        color=color_result,
+    )
+    # add marker for where we're currently at
+    (graph_result_marker,) = ax.plot(
+        [initial_x],
+        [conv_plf(initial_x)],
+        marker=".",
+        color=color_result,
+    )
 
     # Slider update function
     def update(val):
@@ -171,16 +169,16 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType, plot_full_result: bool):
         graph_sum_marker.set_xdata([conv_result.result.x])
         graph_sum_marker.set_ydata([conv_result.result.y])
 
-        if plot_full_result:
-            # update result marker
-            graph_result_marker.set_xdata([val])
-            graph_result_marker.set_ydata([conv_plf(val)])
+        # update result marker
+        graph_result_marker.set_xdata([val])
+        graph_result_marker.set_ydata([conv_plf(val)])
 
         fig.canvas.draw_idle()
 
     # register the slider
     deltax_slider.on_changed(update)
 
+    # create legend with check buttons for toggling the visibility
     rax = ax.inset_axes((0.0, 0.0, 0.12, 0.2))
     check = CheckButtons(
         ax=rax,
