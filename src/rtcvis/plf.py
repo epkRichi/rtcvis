@@ -82,6 +82,85 @@ class PLF:
 
         return all(a == b for a, b in zip(self.points, other.points))
 
+    @classmethod
+    def from_rtctoolbox(
+        cls, points: list[tuple[float, float, float]], x_end: float
+    ) -> "PLF":
+        """Constructs a PLF from rtctoolbox-like arguments.
+
+        Note that rtcvis can only handle finite and aperiodic functions.
+
+        Args:
+            points (list[tuple[float, float, float]]): List of (x, y, slope) tuples.
+                Must be given in order of strictly ascending x coordinates. Only the
+                first two points may be defined at the same x to allow for
+                discontinuities at the start.
+            x_end (float): The x coordinate where the function should end.
+
+        Returns:
+            PLF: The corresponding PLF.
+        """
+        # The first point may be defined at the same (or a greater) x as the second
+        # point to allow for discontinuities right at the start
+        if len(points) > 1:
+            assert points[0][0] <= points[1][0]
+
+        # All further points must be defined at increasing x coordinates
+        for p1, p2 in zip(points[1:], points[2:]):
+            assert p1[0] < p2[0]
+
+        _points = []
+        for i, (x, y, slope) in enumerate(points):
+            # stop if this point lies behind x_end
+            if x > x_end:
+                break
+
+            # Always add this point
+            _points.append(Point(x, y))
+
+            # Check if this point is the start of a new segment and find the end of
+            # that segment
+            if i == (len(points) - 1):
+                # This was the last point
+                if x == x_end:
+                    # The last point was defined at x_end
+                    break
+                # The end of the current segment is x_end
+                segment_end_x = x_end
+            else:
+                # The end of the current segment is the x coordinate of the next point
+                segment_end_x = points[i + 1][0]
+                if x == segment_end_x:
+                    # the next point is defined at the same x coordinate, so no segment
+                    # is started here
+                    continue
+
+            is_last_iteration = False
+            if segment_end_x > x_end:
+                is_last_iteration = True
+                segment_end_x = x_end
+
+            # Compute the y coordinate of the segment end
+            segment_len = segment_end_x - x
+            segment_end_y = y + slope * segment_len
+
+            if (
+                i != (len(points) - 1)
+                and segment_end_x == points[i + 1][0]
+                and segment_end_y == points[i + 1][1]
+            ):
+                # The next point starts exactly where this line ends and will be added
+                # in the next iteration anyway
+                continue
+
+            next_point = Point(x=segment_end_x, y=segment_end_y)
+            _points.append(next_point)
+
+            if is_last_iteration:
+                break
+
+        return PLF(_points)
+
     def start_truncated(self, x_start: float) -> "PLF":
         """Creates a new PLF that is truncated at the start.
 
