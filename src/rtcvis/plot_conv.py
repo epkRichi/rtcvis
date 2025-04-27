@@ -203,6 +203,13 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
         check_props={"facecolor": colors},
     )
 
+    # make the background semi-transparent
+    rax.patch.set_alpha(0.7)
+
+    # make the font a bit larger
+    for text in check.labels:
+        text.set_fontsize("large")
+
     # checkbox update function
     def check_callback(label: str | None):
         if label == conv_type.a_desc:
