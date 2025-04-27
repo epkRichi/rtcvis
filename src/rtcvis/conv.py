@@ -28,15 +28,18 @@ class ConvType(Enum):
             case ConvType.MIN_PLUS_DECONV:
                 return "Min-Plus-Deconvolution"
 
-    def get_descriptions(self) -> tuple[str, str, str, str]:
-        """Returns the formula of the convolution as latex code.
+    def get_descriptions(self) -> tuple[str, str, str, str, str]:
+        """Get latex descriptions of the convolution type.
 
         Returns:
-            str: The formula as latex code.
+            tuple[str, str, str, str, str]: Returns a big tuple with the following
+                entries: b(lambda), (a operator b)(Delta), transformed a,
+                sum/difference between transformed a and b, full formula.
+                The strings are all surrounded by dollar signs already.
         """
         match self:
             case ConvType.MAX_PLUS_CONV:
-                return (
+                result = (
                     r"(a \overline{\otimes} b)(\Delta)",
                     r"a(\Delta-\lambda)",
                     r"a(\Delta-\lambda) + b(\lambda)",
@@ -47,7 +50,7 @@ class ConvType(Enum):
                     ),
                 )
             case ConvType.MAX_PLUS_DECONV:
-                return (
+                result = (
                     r"(a \overline{\oslash} b)(\Delta)",
                     r"a(\Delta + \lambda)",
                     r"a(\Delta + \lambda) - b(\lambda)",
@@ -58,7 +61,7 @@ class ConvType(Enum):
                     ),
                 )
             case ConvType.MIN_PLUS_CONV:
-                return (
+                result = (
                     r"(a \otimes b)(\Delta)",
                     r"a(\Delta-\lambda)",
                     r"a(\Delta-\lambda) + b(\lambda)",
@@ -69,7 +72,7 @@ class ConvType(Enum):
                     ),
                 )
             case ConvType.MIN_PLUS_DECONV:
-                return (
+                result = (
                     r"(a \oslash b)(\Delta)",
                     r"a(\Delta + \lambda)",
                     r"a(\Delta + \lambda) - b(\lambda)",
@@ -79,6 +82,13 @@ class ConvType(Enum):
                         + r"\{a(\Delta + \lambda) - b(\lambda)\}"
                     ),
                 )
+        return (
+            r"$b(\lambda)$",
+            f"${result[0]}$",
+            f"${result[1]}$",
+            f"${result[2]}$",
+            f"${result[3]}$",
+        )
 
 
 class ConvAtXResult:
