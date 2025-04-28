@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, CheckButtons
+from matplotlib.widgets import Slider, CheckButtons, Button, Widget
 import matplotlib.colors as mcolors
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 
 from rtcvis.plf import PLF
 from rtcvis.conv import ConvType, conv, conv_at_x, LAMBDA, DELTA
@@ -61,18 +63,73 @@ class ConvProperties:
         self.max_y = max(ab_max_y, conv_max_y) + PADDING
 
 
-def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
-    """Plots a convolution using matplotlib.
+def plot_conv(a: PLF, b: PLF):
+    """Opens an interactive plot for convolutions.
 
-    The plot is interactive: The user can enter the delta for which to compute the
-    convolution using a slider. The plot will show the original PLF a, the transformed
-    PLF a, PLF b, the sum/difference of those two and the full result of the
-    convolution. All functions can individually be toggled in the legend.
+    The plot is very interactive:
+
+    The user can enter the delta for which to compute the convolution using a slider.
+
+    The type of convolution can also be selected using buttons.
+
+    The plot will show the original PLF a, the transformed PLF a, PLF b, the
+    sum/difference of those two and the full result of the convolution. All functions
+    can individually be toggled in the legend.
+
+    Args:
+        a (PLF): First PLF.
+        b (PLF): Second PLF.
+    """
+    # create a figure with all required axes
+    fig, axs = plt.subplot_mosaic("0123;pppp;ssss", height_ratios=[0.07, 1, 0.02])
+    ax_slider = axs["s"]
+    ax_plot = axs["p"]
+    conv_widgets: tuple[Widget, ...] = ()
+
+    def draw_conv_plot(conv_type: ConvType):
+        nonlocal conv_widgets
+        # add the actual convolution plot
+        ax_plot.clear()
+        ax_slider.clear()
+        # keep references so they're not garbage collected
+        conv_widgets = draw_conv(
+            a=a, b=b, conv_type=conv_type, fig=fig, ax_plot=ax_plot, ax_slider=ax_slider
+        )
+
+    # create buttons for selecting the ConvolutionType
+    buttons = []
+    for i, ctype in enumerate(ConvType):
+        ax_button = axs[str(i)]
+        button = Button(ax_button, ctype.operator_desc)
+        button.on_clicked(
+            lambda _, conv_type=ctype: draw_conv_plot(conv_type)  # type: ignore[misc]
+        )
+        buttons.append(button)  # keep reference to prevent garbage collection
+        ax_button.texts[-1].set_fontsize("large")
+
+    draw_conv_plot(ConvType.MAX_PLUS_CONV)
+
+    plt.show()
+
+
+def draw_conv(
+    a: PLF, b: PLF, conv_type: ConvType, fig: Figure, ax_plot: Axes, ax_slider: Axes
+) -> tuple[Widget, ...]:
+    """Draws a convolution of the given type into existing axes.
 
     Args:
         a (PLF): PLF a.
         b (PLF): PLF b.
         conv_type (ConvType): The type of convolution.
+        fig (Figure): The figure object.
+        ax_plot (Axes): The axes into which the plot should be drawn. Has to be cleared
+            before calling this function.
+        ax_slider (Axes): The axes into which the slider should be drawn. Also has to
+            be cleared before.
+
+    Returns:
+        tuple[Widget, ...]: References to the widgets created by this function. Store
+            them in a local variable so they're not garbage collected!
     """
     conv_properties = ConvProperties(a=a, b=b, conv_type=conv_type)
 
@@ -83,21 +140,15 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
     color_result = mcolors.TABLEAU_COLORS["tab:gray"]
     colors = (color_a, color_trans_a, color_b, color_sum, color_result)
 
-    fig, ax = plt.subplots()
-    ax.set_aspect("equal", adjustable="box")
+    ax_plot.set_aspect("equal", adjustable="box")
 
     # compute initial convolution result
     initial_x = 0
     conv_result = conv_at_x(a, b, initial_x, conv_type)
 
-    # Make room for bottom slider
-    fig.subplots_adjust(bottom=0.25)
-
     # Create bottom slider
-    plot_pos = ax.get_position(True)
-    axdeltax = fig.add_axes((plot_pos.x0, plot_pos.y0 - 0.12, plot_pos.width, 0.02))
     deltax_slider = Slider(
-        ax=axdeltax,
+        ax=ax_slider,
         label=f"${DELTA}$",
         valmin=0,
         valmax=conv_properties.slider_max,
@@ -106,11 +157,11 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
     )
 
     # plot a (but hide it by default)
-    (graph_a,) = ax.plot(a.x, a.y, label=conv_type.a_desc, color=color_a)
+    (graph_a,) = ax_plot.plot(a.x, a.y, label=conv_type.a_desc, color=color_a)
     graph_a.set_visible(False)
 
     # plot transformed a
-    (graph_trans_a,) = ax.plot(
+    (graph_trans_a,) = ax_plot.plot(
         conv_result.transformed_a.x,
         conv_result.transformed_a.y,
         label=conv_type.a_trans_desc,
@@ -118,10 +169,10 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
     )
 
     # plot b
-    (graph_b,) = ax.plot(b.x, b.y, label=conv_type.b_desc, color=color_b)
+    (graph_b,) = ax_plot.plot(b.x, b.y, label=conv_type.b_desc, color=color_b)
 
     # plot convolution sum
-    (graph_sum,) = ax.plot(
+    (graph_sum,) = ax_plot.plot(
         conv_result.sum.x,
         conv_result.sum.y,
         label=conv_type.sum_desc,
@@ -129,7 +180,7 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
     )
 
     # add marker for conv result
-    (graph_sum_marker,) = ax.plot(
+    (graph_sum_marker,) = ax_plot.plot(
         [conv_result.result.x],
         [conv_result.result.y],
         marker=".",
@@ -138,14 +189,14 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
 
     # plot full result of convolution
     conv_plf = conv_properties.result
-    (graph_result,) = ax.plot(
+    (graph_result,) = ax_plot.plot(
         conv_plf.x,
         conv_plf.y,
         label=conv_type.operator_desc,
         color=color_result,
     )
     # add marker for where we're currently at
-    (graph_result_marker,) = ax.plot(
+    (graph_result_marker,) = ax_plot.plot(
         [initial_x],
         [conv_plf(initial_x)],
         marker=".",
@@ -181,7 +232,7 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
     deltax_slider.on_changed(slider_callback)
 
     # create legend with check buttons for toggling the visibility
-    rax = ax.inset_axes((0.0, 0.0, 0.12, 0.2))
+    rax = ax_plot.inset_axes((0.0, 0.0, 0.12, 0.2))
     check = CheckButtons(
         ax=rax,
         labels=[
@@ -230,11 +281,11 @@ def plot_conv(a: PLF, b: PLF, conv_type: ConvType):
     check.on_clicked(check_callback)
 
     # set limits, title and xlabel
-    ax.set_xlim(conv_properties.min_x, conv_properties.max_x)
-    ax.set_ylim(conv_properties.min_y, conv_properties.max_y)
-    ax.set_title(
+    ax_plot.set_xlim(conv_properties.min_x, conv_properties.max_x)
+    ax_plot.set_ylim(conv_properties.min_y, conv_properties.max_y)
+    ax_plot.set_title(
         f"{conv_type}: ${conv_type.operator_desc[1:-1]} = {conv_type.full_desc[1:-1]}$"
     )
-    ax.set_xlabel(f"${LAMBDA}$")
+    ax_plot.set_xlabel(f"${LAMBDA}$")
 
-    plt.show()
+    return (deltax_slider, check)
