@@ -89,10 +89,15 @@ def plot_conv() -> None:
     ax_textbox_b = axs["b"]
     ax_slider = axs["s"]
     ax_plot = axs["p"]
+
+    # references to all widgets of draw_conv to prevent garbage collection
     conv_widgets: tuple[Widget, ...] = ()
+
+    # "global state" variables that will be shared across multiple calls of draw_conv
     conv_type = ConvType.MAX_PLUS_CONV
     a, b = PLF([]), PLF([])
     visibilities = [False, True, True, True, True]
+    x = [0.0]
 
     def update_plf(text: str, selector: str):
         nonlocal a, b
@@ -138,6 +143,7 @@ def plot_conv() -> None:
             ax_plot=ax_plot,
             ax_slider=ax_slider,
             visibilities=visibilities,
+            x=x,
         )
 
     def update_conv_type(ctype: ConvType, event: MouseEvent):
@@ -169,6 +175,7 @@ def draw_conv(
     ax_plot: Axes,
     ax_slider: Axes,
     visibilities: list[bool],
+    x: list[float],
 ) -> tuple[Widget, ...]:
     """Draws a convolution of the given type into existing axes.
 
@@ -183,6 +190,8 @@ def draw_conv(
             be cleared before.
         visibilities (list[bool]): List of flags that toggle whether each displayed
             function should be visible by default.
+        x (list[float]): List with 1 entry that represents the current x value. This
+            entry will be changed when the slider is used.
 
     Returns:
         tuple[Widget, ...]: References to the widgets created by this function. Store
@@ -200,7 +209,7 @@ def draw_conv(
     ax_plot.set_aspect("equal", adjustable="box")
 
     # compute initial convolution result
-    initial_x = 0
+    initial_x = min(conv_properties.slider_max, max(conv_properties.slider_min, x[0]))
     conv_result = conv_at_x(a, b, initial_x, conv_type)
 
     # Create bottom slider
@@ -268,6 +277,9 @@ def draw_conv(
 
     # Slider update function
     def slider_callback(val):
+        # update x
+        x[0] = val
+
         # Recompute convolution
         conv_result = conv_at_x(a, b, val, conv_type)
 
