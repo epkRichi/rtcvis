@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, CheckButtons, Button, Widget
+from matplotlib.widgets import Slider, CheckButtons, Button, Widget, TextBox
 import matplotlib.colors as mcolors
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
@@ -63,31 +63,66 @@ class ConvProperties:
         self.max_y = max(ab_max_y, conv_max_y) + PADDING
 
 
-def plot_conv(a: PLF, b: PLF):
+def plot_conv():
     """Opens an interactive plot for convolutions.
 
     The plot is very interactive:
 
-    The user can enter the delta for which to compute the convolution using a slider.
+    The functions to be used can be entered using textboxes.
+
+    The delta for which the convolution should be computed can be specified using a
+    slider.
 
     The type of convolution can also be selected using buttons.
 
-    The plot will show the original PLF a, the transformed PLF a, PLF b, the
+    The plot can show the original PLF a, the transformed PLF a, PLF b, the
     sum/difference of those two and the full result of the convolution. All functions
     can individually be toggled in the legend.
-
-    Args:
-        a (PLF): First PLF.
-        b (PLF): Second PLF.
     """
     # create a figure with all required axes
-    fig, axs = plt.subplot_mosaic("0123;pppp;ssss", height_ratios=[0.07, 1, 0.02])
+    fig, axs = plt.subplot_mosaic(
+        "aaaa;bbbb;0123;pppp;ssss", height_ratios=[0.06, 0.06, 0.07, 1, 0.02]
+    )
+    ax_textbox_a = axs["a"]
+    ax_textbox_b = axs["b"]
     ax_slider = axs["s"]
     ax_plot = axs["p"]
     conv_widgets: tuple[Widget, ...] = ()
+    conv_type = ConvType.MAX_PLUS_CONV
+    a, b = PLF([]), PLF([])
 
-    def draw_conv_plot(conv_type: ConvType):
-        nonlocal conv_widgets
+    def update_plf(text: str, selector: str):
+        nonlocal a, b
+        try:
+            split_at = text.rindex(",")
+            plf_str, x_end_str = text[:split_at], text[split_at + 1 :]
+            new_plf = PLF.from_rtctoolbox(eval(plf_str), int(x_end_str))
+            if selector == "a":
+                a = new_plf
+            elif selector == "b":
+                b = new_plf
+        except Exception:
+            pass
+
+    def textbox_callback(text: str, selector: str):
+        update_plf(text, selector)
+        draw_conv_plot()
+
+    # create the textboxes
+    textbox_a = TextBox(
+        ax_textbox_a,
+        "a:",
+        initial="[(0, 0, 0), (1, 1, 0), (2, 2, 0), (3, 3, 0)], 5",
+        textalignment="left",
+    )
+    textbox_b = TextBox(
+        ax_textbox_b, "b:", initial="[(0, 0, 0), (1, 0, 1)], 5", textalignment="left"
+    )
+    textbox_a.on_text_change(lambda text: textbox_callback(text, "a"))
+    textbox_b.on_text_change(lambda text: textbox_callback(text, "b"))
+
+    def draw_conv_plot():
+        nonlocal conv_widgets, a, b, conv_type
         # add the actual convolution plot
         ax_plot.clear()
         ax_slider.clear()
@@ -96,18 +131,25 @@ def plot_conv(a: PLF, b: PLF):
             a=a, b=b, conv_type=conv_type, fig=fig, ax_plot=ax_plot, ax_slider=ax_slider
         )
 
+    def update_conv_type(_conv_type: ConvType):
+        nonlocal conv_type
+        conv_type = _conv_type
+        draw_conv_plot()
+
     # create buttons for selecting the ConvolutionType
     buttons = []
     for i, ctype in enumerate(ConvType):
         ax_button = axs[str(i)]
         button = Button(ax_button, ctype.operator_desc)
         button.on_clicked(
-            lambda _, conv_type=ctype: draw_conv_plot(conv_type)  # type: ignore[misc]
+            lambda _, _conv_type=ctype: update_conv_type(_conv_type)  # type: ignore[misc]
         )
         buttons.append(button)  # keep reference to prevent garbage collection
         ax_button.texts[-1].set_fontsize("large")
 
-    draw_conv_plot(ConvType.MAX_PLUS_CONV)
+    update_plf(textbox_a.text, "a")
+    update_plf(textbox_b.text, "b")
+    draw_conv_plot()
 
     plt.show()
 

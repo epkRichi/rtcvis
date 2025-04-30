@@ -6,4 +6,4 @@ if __name__ == "__main__":
     b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
     plot_plfs([a, b])
 
-    plot_conv(a, b)
+    plot_conv()
