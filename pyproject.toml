@@ -18,7 +18,7 @@ where = ["src"]
 rtcvis = ["py.typed"]
 
 [project.optional-dependencies]
-dev = ["pytest", "pre-commit"]
+dev = ["pytest", "pre-commit", "mypy", "black"]
 
 [tool.mypy]
 files = ["src/rtcvis", "tests", "example.py"]

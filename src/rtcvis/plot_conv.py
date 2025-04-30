@@ -1,8 +1,10 @@
+import functools
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons, Button, Widget, TextBox
 import matplotlib.colors as mcolors
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
+from matplotlib.backend_bases import MouseEvent
 
 from rtcvis.plf import PLF
 from rtcvis.conv import ConvType, conv, conv_at_x, LAMBDA, DELTA
@@ -63,7 +65,7 @@ class ConvProperties:
         self.max_y = max(ab_max_y, conv_max_y) + PADDING
 
 
-def plot_conv():
+def plot_conv() -> None:
     """Opens an interactive plot for convolutions.
 
     The plot is very interactive:
@@ -90,6 +92,7 @@ def plot_conv():
     conv_widgets: tuple[Widget, ...] = ()
     conv_type = ConvType.MAX_PLUS_CONV
     a, b = PLF([]), PLF([])
+    visibilities = [False, True, True, True, True]
 
     def update_plf(text: str, selector: str):
         nonlocal a, b
@@ -122,18 +125,24 @@ def plot_conv():
     textbox_b.on_text_change(lambda text: textbox_callback(text, "b"))
 
     def draw_conv_plot():
-        nonlocal conv_widgets, a, b, conv_type
+        nonlocal conv_widgets
         # add the actual convolution plot
         ax_plot.clear()
         ax_slider.clear()
         # keep references so they're not garbage collected
         conv_widgets = draw_conv(
-            a=a, b=b, conv_type=conv_type, fig=fig, ax_plot=ax_plot, ax_slider=ax_slider
+            a=a,
+            b=b,
+            conv_type=conv_type,
+            fig=fig,
+            ax_plot=ax_plot,
+            ax_slider=ax_slider,
+            visibilities=visibilities,
         )
 
-    def update_conv_type(_conv_type: ConvType):
+    def update_conv_type(ctype: ConvType, event: MouseEvent):
         nonlocal conv_type
-        conv_type = _conv_type
+        conv_type = ctype
         draw_conv_plot()
 
     # create buttons for selecting the ConvolutionType
@@ -141,9 +150,7 @@ def plot_conv():
     for i, ctype in enumerate(ConvType):
         ax_button = axs[str(i)]
         button = Button(ax_button, ctype.operator_desc)
-        button.on_clicked(
-            lambda _, _conv_type=ctype: update_conv_type(_conv_type)  # type: ignore[misc]
-        )
+        button.on_clicked(functools.partial(update_conv_type, ctype))
         buttons.append(button)  # keep reference to prevent garbage collection
         ax_button.texts[-1].set_fontsize("large")
 
@@ -155,7 +162,13 @@ def plot_conv():
 
 
 def draw_conv(
-    a: PLF, b: PLF, conv_type: ConvType, fig: Figure, ax_plot: Axes, ax_slider: Axes
+    a: PLF,
+    b: PLF,
+    conv_type: ConvType,
+    fig: Figure,
+    ax_plot: Axes,
+    ax_slider: Axes,
+    visibilities: list[bool],
 ) -> tuple[Widget, ...]:
     """Draws a convolution of the given type into existing axes.
 
@@ -168,6 +181,8 @@ def draw_conv(
             before calling this function.
         ax_slider (Axes): The axes into which the slider should be drawn. Also has to
             be cleared before.
+        visibilities (list[bool]): List of flags that toggle whether each displayed
+            function should be visible by default.
 
     Returns:
         tuple[Widget, ...]: References to the widgets created by this function. Store
@@ -200,7 +215,7 @@ def draw_conv(
 
     # plot a (but hide it by default)
     (graph_a,) = ax_plot.plot(a.x, a.y, label=conv_type.a_desc, color=color_a)
-    graph_a.set_visible(False)
+    graph_a.set_visible(visibilities[0])
 
     # plot transformed a
     (graph_trans_a,) = ax_plot.plot(
@@ -209,9 +224,11 @@ def draw_conv(
         label=conv_type.a_trans_desc,
         color=color_trans_a,
     )
+    graph_trans_a.set_visible(visibilities[1])
 
     # plot b
     (graph_b,) = ax_plot.plot(b.x, b.y, label=conv_type.b_desc, color=color_b)
+    graph_b.set_visible(visibilities[2])
 
     # plot convolution sum
     (graph_sum,) = ax_plot.plot(
@@ -220,6 +237,7 @@ def draw_conv(
         label=conv_type.sum_desc,
         color=color_sum,
     )
+    graph_sum.set_visible(visibilities[3])
 
     # add marker for conv result
     (graph_sum_marker,) = ax_plot.plot(
@@ -228,6 +246,7 @@ def draw_conv(
         marker=".",
         color=color_sum,
     )
+    graph_sum_marker.set_visible(visibilities[3])
 
     # plot full result of convolution
     conv_plf = conv_properties.result
@@ -237,6 +256,7 @@ def draw_conv(
         label=conv_type.operator_desc,
         color=color_result,
     )
+    graph_result.set_visible(visibilities[4])
     # add marker for where we're currently at
     (graph_result_marker,) = ax_plot.plot(
         [initial_x],
@@ -244,6 +264,7 @@ def draw_conv(
         marker=".",
         color=color_result,
     )
+    graph_result_marker.set_visible(visibilities[4])
 
     # Slider update function
     def slider_callback(val):
@@ -306,15 +327,20 @@ def draw_conv(
     # checkbox update function
     def check_callback(label: str | None):
         if label == conv_type.a_desc:
+            visibilities[0] = not visibilities[0]
             graph_a.set_visible(not graph_a.get_visible())
         elif label == conv_type.a_trans_desc:
+            visibilities[1] = not visibilities[1]
             graph_trans_a.set_visible(not graph_trans_a.get_visible())
         elif label == conv_type.b_desc:
+            visibilities[2] = not visibilities[2]
             graph_b.set_visible(not graph_b.get_visible())
         elif label == conv_type.sum_desc:
+            visibilities[3] = not visibilities[3]
             graph_sum_marker.set_visible(not graph_sum.get_visible())
             graph_sum.set_visible(not graph_sum.get_visible())
         elif label == conv_type.operator_desc:
+            visibilities[4] = not visibilities[4]
             graph_result_marker.set_visible(not graph_result.get_visible())
             graph_result.set_visible(not graph_result.get_visible())
         fig.canvas.draw_idle()
