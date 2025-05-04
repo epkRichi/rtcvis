@@ -126,8 +126,8 @@ def plot_conv() -> None:
     textbox_b = TextBox(
         ax_textbox_b, "b:", initial="[(0, 0, 0), (1, 0, 1)], 5", textalignment="left"
     )
-    textbox_a.on_text_change(lambda text: textbox_callback(text, "a"))
-    textbox_b.on_text_change(lambda text: textbox_callback(text, "b"))
+    textbox_a.on_submit(lambda text: textbox_callback(text, "a"))
+    textbox_b.on_submit(lambda text: textbox_callback(text, "b"))
 
     def draw_conv_plot():
         nonlocal conv_widgets
