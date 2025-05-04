@@ -248,7 +248,12 @@ def conv(
 
     # Now we just need to compute the minimum or maximum over all those PLFs :)
     compute_min = conv_type in (ConvType.MIN_PLUS_CONV, ConvType.MAX_PLUS_DECONV)
-    result: PLF = plf_list_min_max(wsogmm1 + wsogmm2, compute_min=compute_min)
+    plf_list = (
+        (wsogmm1 + wsogmm2)
+        if (a.x_end - a.x_start) > (b.x_end - b.x_start)
+        else (wsogmm2 + wsogmm1)
+    )
+    result: PLF = plf_list_min_max(plf_list, compute_min=compute_min)
 
     # Optionally truncate the start/end
     if start is not None:
