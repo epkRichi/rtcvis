@@ -84,7 +84,9 @@ def plot_conv() -> None:
     """
     # create a figure with all required axes
     fig, axs = plt.subplot_mosaic(
-        "aaaa;bbbb;0123;pppp;ssss", height_ratios=[0.06, 0.06, 0.07, 1, 0.02]
+        "aaaa;bbbb;0123;pppp;ssss",
+        height_ratios=[0.04, 0.04, 0.05, 1, 0.03],
+        layout="constrained",
     )
     ax_textbox_a = axs["a"]
     ax_textbox_b = axs["b"]
