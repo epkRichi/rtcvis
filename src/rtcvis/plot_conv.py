@@ -368,5 +368,6 @@ def draw_conv(
         f"{conv_type}: ${conv_type.operator_desc[1:-1]} = {conv_type.full_desc[1:-1]}$"
     )
     ax_plot.set_xlabel(f"${LAMBDA}$")
+    ax_plot.grid(color="0.9")
 
     return (deltax_slider, check)
