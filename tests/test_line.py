@@ -1,7 +1,7 @@
 import pytest
 
-from rtcvis.point import Point
 from rtcvis.line import Line, line_intersection
+from rtcvis.point import Point
 
 
 @pytest.mark.parametrize(

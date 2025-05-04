@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import Optional
+
 from rtcvis.plf import PLF, plf_list_min_max
 from rtcvis.point import Point
-
 
 LAMBDA = r"\lambda"
 DELTA = r"\Delta"

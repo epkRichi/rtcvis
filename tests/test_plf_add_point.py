@@ -1,5 +1,6 @@
 import pytest
-from rtcvis import *
+
+from rtcvis import PLF, Point
 
 
 @pytest.mark.parametrize(

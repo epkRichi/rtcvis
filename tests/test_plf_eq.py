@@ -1,4 +1,4 @@
-from rtcvis import *
+from rtcvis import PLF, Point
 
 
 def test_point_eq():

@@ -1,5 +1,6 @@
 import pytest
-from rtcvis import *
+
+from rtcvis import PLF
 from rtcvis.plf import match_plf
 
 

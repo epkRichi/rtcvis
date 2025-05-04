@@ -1,13 +1,14 @@
 import functools
-import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, CheckButtons, Button, Widget, TextBox
+
 import matplotlib.colors as mcolors
-from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.backend_bases import MouseEvent
+from matplotlib.figure import Figure
+from matplotlib.widgets import Button, CheckButtons, Slider, TextBox, Widget
 
+from rtcvis.conv import DELTA, LAMBDA, ConvType, conv, conv_at_x
 from rtcvis.plf import PLF
-from rtcvis.conv import ConvType, conv, conv_at_x, LAMBDA, DELTA
 
 
 class ConvProperties:
