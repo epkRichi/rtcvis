@@ -83,68 +83,6 @@ class ConvType(Enum):
 
         return f"${op}" + r"\{" + self.sum_desc[1:-1] + r"\}$"
 
-    # def get_descriptions(self) -> tuple[str, str, str, str, str]:
-    #     """Get latex descriptions of the convolution type.
-
-    #     Returns:
-    #         tuple[str, str, str, str, str]: Returns a big tuple with the following
-    #             entries: b(lambda), (a operator b)(Delta), transformed a,
-    #             sum/difference between transformed a and b, full formula.
-    #             The strings are all surrounded by dollar signs already.
-    #     """
-    #     match self:
-    #         case ConvType.MAX_PLUS_CONV:
-    #             result = (
-    #                 r"(a \overline{\otimes} b)(\Delta)",
-    #                 r"a(\Delta-\lambda)",
-    #                 r"a(\Delta-\lambda) + b(\lambda)",
-    #                 (
-    #                     r"(a \overline{\otimes} b)(\Delta) = "
-    #                     + r"\text{sup}_{0 \leq \lambda \leq \Delta}"
-    #                     + r"\{a(\Delta-\lambda) + b(\lambda)\}"
-    #                 ),
-    #             )
-    #         case ConvType.MAX_PLUS_DECONV:
-    #             result = (
-    #                 r"(a \overline{\oslash} b)(\Delta)",
-    #                 r"a(\Delta + \lambda)",
-    #                 r"a(\Delta + \lambda) - b(\lambda)",
-    #                 (
-    #                     r"(a \overline{\oslash} b)(\Delta) = "
-    #                     + r"\text{inf}_{\lambda \geq 0}"
-    #                     + r"\{a(\Delta + \lambda) - b(\lambda)\}"
-    #                 ),
-    #             )
-    #         case ConvType.MIN_PLUS_CONV:
-    #             result = (
-    #                 r"(a \otimes b)(\Delta)",
-    #                 r"a(\Delta-\lambda)",
-    #                 r"a(\Delta-\lambda) + b(\lambda)",
-    #                 (
-    #                     r"(a \otimes b)(\Delta) = "
-    #                     + r"\text{inf}_{0 \leq \lambda \leq \Delta}"
-    #                     + r"\{a(\Delta-\lambda) + b(\lambda)\}"
-    #                 ),
-    #             )
-    #         case ConvType.MIN_PLUS_DECONV:
-    #             result = (
-    #                 r"(a \oslash b)(\Delta)",
-    #                 r"a(\Delta + \lambda)",
-    #                 r"a(\Delta + \lambda) - b(\lambda)",
-    #                 (
-    #                     r"(a \oslash b)(\Delta) = "
-    #                     + r"\text{sup}_{\lambda \geq 0}"
-    #                     + r"\{a(\Delta + \lambda) - b(\lambda)\}"
-    #                 ),
-    #             )
-    #     return (
-    #         r"$b(\lambda)$",
-    #         f"${result[0]}$",
-    #         f"${result[1]}$",
-    #         f"${result[2]}$",
-    #         f"${result[3]}$",
-    #     )
-
 
 class ConvAtXResult:
     def __init__(self, transformed_a: PLF, sum: PLF, result: Point) -> None:
