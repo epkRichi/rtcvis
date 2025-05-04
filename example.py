@@ -1,8 +1,4 @@
-from rtcvis import PLF, Point, plot_conv, plot_plfs
+from rtcvis import plot_conv
 
 if __name__ == "__main__":
-    a = PLF([Point(0, 0), (1, 0), (5, 4)])
-    b = PLF([(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 2)])
-    plot_plfs([a, b])
-
     plot_conv()
