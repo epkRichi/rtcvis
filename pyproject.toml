@@ -11,20 +11,25 @@ description = "Tool for visualizing Real Time Calculus (RTC) operations"
 dependencies = ["matplotlib"]
 requires-python = ">=3.12"
 readme = "README.md"
+license = "MIT"
 license-files = ["LICENSE"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
+keywords = ["math", "visualization", "education"]
+
+[project.optional-dependencies]
+dev = ["pytest", "pre-commit", "mypy", "black", "build"]
+
+[project.urls]
+Repository = "https://github.com/epkRichi/rtcvis"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
 rtcvis = ["py.typed"]
-
-[project.optional-dependencies]
-dev = ["pytest", "pre-commit", "mypy", "black", "build"]
 
 [tool.mypy]
 files = ["src/rtcvis", "tests", "example.py"]
