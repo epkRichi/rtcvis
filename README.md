@@ -1,6 +1,6 @@
 # rtcvis
 
-rtcvis is an educational tool that can create interactive visualizations for convolution operations in the min-plus algebra, such as needed for real time calculus (RTC). RTC is a method for performance analysis of real time systems. Note that rtcvis cannot be used for performance analysis however, since it only supports finite curves - for this purpose, you can use the [RTC toolbox from ETH Zurich](https://www.mpa.ethz.ch/). Please note that I'm in no way affiliated with and this project is in no way endorsed by ETH Zurich.
+rtcvis is an educational tool that can create interactive visualizations for convolution operations in the min-plus algebra, such as needed for real time calculus (RTC). RTC is a method for performance analysis of real time systems. Note that rtcvis cannot be used for performance analysis however, since it only supports finite curves - for this purpose, you can use the [RTC toolbox from ETH Zurich](https://www.mpa.ethz.ch/). Please note that I'm in no way affiliated with and that this project is in no way endorsed by ETH Zurich.
 
 ## Installation
 
