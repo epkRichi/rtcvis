@@ -8,8 +8,14 @@ build-backend = "setuptools.build_meta"
 name = "rtcvis"
 version = "0.1.0"
 description = "Tool for visualizing Real Time Calculus (RTC) operations"
-dependencies = ["numpy", "matplotlib"]
+dependencies = ["matplotlib"]
 requires-python = ">=3.12"
+readme = "README.md"
+license-files = ["LICENSE"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -18,7 +24,7 @@ where = ["src"]
 rtcvis = ["py.typed"]
 
 [project.optional-dependencies]
-dev = ["pytest", "pre-commit", "mypy", "black"]
+dev = ["pytest", "pre-commit", "mypy", "black", "build"]
 
 [tool.mypy]
 files = ["src/rtcvis", "tests", "example.py"]
