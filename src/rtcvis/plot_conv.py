@@ -23,15 +23,12 @@ class ConvProperties:
             b (PLF): PLF b.
             conv_type (ConvType): The type of convolution.
         """
-        # allow computing the convolution for all x>=0 upto the point where a and b no
-        # longer overlap
+        # allow computing the convolution for all x where a and b overlap
         PADDING = 0.5
         is_deconv = conv_type in (ConvType.MAX_PLUS_DECONV, ConvType.MIN_PLUS_DECONV)
         if is_deconv:
             min_deconv_result = conv(a=a, b=b, conv_type=ConvType.MIN_PLUS_DECONV)
             max_deconv_result = conv(a=a, b=b, conv_type=ConvType.MAX_PLUS_DECONV)
-            conv_min_x = (a.x_start - a.x_end) + b.x_start
-            conv_max_x = max(a.x_end, b.x_end)
             conv_min_y = max_deconv_result.min.y
             conv_max_y = min_deconv_result.max.y
             self.slider_min = a.x_start - b.x_end
@@ -44,8 +41,6 @@ class ConvProperties:
         else:
             min_conv_result = conv(a=a, b=b, conv_type=ConvType.MIN_PLUS_CONV)
             max_conv_result = conv(a=a, b=b, conv_type=ConvType.MAX_PLUS_CONV)
-            conv_min_x = min(-a.x_end, b.x_start)
-            conv_max_x = b.x_end + (a.x_end - a.x_start)
             conv_min_y = min_conv_result.min.y
             conv_max_y = max_conv_result.max.y
             self.slider_min = a.x_start + b.x_start
@@ -55,12 +50,14 @@ class ConvProperties:
                 if conv_type == ConvType.MIN_PLUS_CONV
                 else max_conv_result
             )
-        ab_min_y = min(a.min.y, b.min.y)
-        ab_max_y = max(a.max.y, b.max.y)
-        self.min_x = conv_min_x - PADDING
-        self.max_x = conv_max_x + PADDING
-        self.min_y = min(ab_min_y, conv_min_y) - PADDING
-        self.max_y = max(ab_max_y, conv_max_y) + PADDING
+        self.min_x = (
+            min(a.x_start, b.x_start - (a.x_end - a.x_start), self.slider_min) - PADDING
+        )
+        self.max_x = (
+            max(a.x_end, b.x_end + (a.x_end - a.x_start), self.slider_max) + PADDING
+        )
+        self.min_y = min(a.min.y, b.min.y, conv_min_y) - PADDING
+        self.max_y = max(a.max.y, b.max.y, conv_max_y) + PADDING
 
 
 def plot_conv() -> None:
