@@ -1,3 +1,4 @@
+import ast
 import functools
 
 import matplotlib.colors as mcolors
@@ -99,9 +100,19 @@ def plot_conv() -> None:
     def update_plf(text: str, selector: str):
         nonlocal a, b
         try:
-            split_at = text.rindex(",")
-            plf_str, x_end_str = text[:split_at], text[split_at + 1 :]
-            new_plf = PLF.from_rtctoolbox(eval(plf_str), float(x_end_str))
+            points, x_end = ast.literal_eval(text)
+            if not (
+                isinstance(points, list)
+                and all(
+                    isinstance(a, tuple)
+                    and len(a) == 3
+                    and all(isinstance(b, (int, float)) for b in a)
+                    for a in points
+                )
+                and isinstance(x_end, (int, float))
+            ):
+                raise Exception()
+            new_plf = PLF.from_rtctoolbox(points, x_end)
             if selector == "a":
                 a = new_plf
             elif selector == "b":
