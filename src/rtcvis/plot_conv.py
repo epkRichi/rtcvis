@@ -97,7 +97,7 @@ def plot_conv() -> None:
     visibilities = [False, True, True, True, True]
     x = [0.0]
 
-    def update_plf(text: str, selector: str):
+    def update_plf(text: str, selector: str, textbox: TextBox):
         nonlocal a, b
         try:
             points, x_end = ast.literal_eval(text)
@@ -117,11 +117,12 @@ def plot_conv() -> None:
                 a = new_plf
             elif selector == "b":
                 b = new_plf
+            textbox.text_disp.set_color("black")
         except Exception:
-            pass
+            textbox.text_disp.set_color("red")
 
-    def textbox_callback(text: str, selector: str):
-        update_plf(text, selector)
+    def textbox_callback(text: str, selector: str, textbox: TextBox):
+        update_plf(text, selector, textbox)
         draw_conv_plot()
 
     # create the textboxes
@@ -134,8 +135,8 @@ def plot_conv() -> None:
     textbox_b = TextBox(
         ax_textbox_b, "b:", initial="[(0, 0, 0), (1, 0, 1)], 5", textalignment="left"
     )
-    textbox_a.on_submit(lambda text: textbox_callback(text, "a"))
-    textbox_b.on_submit(lambda text: textbox_callback(text, "b"))
+    textbox_a.on_submit(lambda text: textbox_callback(text, "a", textbox_a))
+    textbox_b.on_submit(lambda text: textbox_callback(text, "b", textbox_b))
 
     def draw_conv_plot():
         nonlocal conv_widgets
@@ -168,8 +169,8 @@ def plot_conv() -> None:
         buttons.append(button)  # keep reference to prevent garbage collection
         ax_button.texts[-1].set_fontsize("large")
 
-    update_plf(textbox_a.text, "a")
-    update_plf(textbox_b.text, "b")
+    update_plf(textbox_a.text, "a", textbox_a)
+    update_plf(textbox_b.text, "b", textbox_b)
     draw_conv_plot()
 
     plt.show()
