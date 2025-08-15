@@ -27,10 +27,7 @@ Curves can be specified using a syntax similar to the one from [RTC toolbox](htt
 - The first argument is a list of points: `x` and `y` are the coordinates of this points and `m` is the slope of the line section starting at this point
 - `l` is the length of the curve, or, in other words, the x coordinate at which the curve ends
 
-Note that
-
-- Curves have to start at x=0
-- Curves are allowed to have discontinuities
+Note that Curves are allowed to have discontinuities
 
 
 ## Development
