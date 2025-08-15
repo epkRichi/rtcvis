@@ -1,6 +1,7 @@
 import operator
 from typing import Sequence, Union
 
+from rtcvis.exceptions import RTCVisException, ValidationException
 from rtcvis.line import Line, line_intersection
 from rtcvis.point import Point
 
@@ -24,14 +25,16 @@ class PLF:
         self._x = _x = [p.x for p in _points]
         self._y = _y = [p.y for p in _points]
 
-        if len(_points) > 1:
-            # the points have to be given with ascending x coordinates
-            assert all(_x[i] <= _x[i + 1] for i in range(len(_points) - 1))
-        if len(_points) > 2:
-            # there can be at most 2 _points at the same x coordinate
-            assert all(
-                (_x[i] != _x[i + 1]) or (_x[i + 1] != _x[i + 2])
-                for i in range(len(_points) - 2)
+        if len(_points) > 1 and not all(
+            _x[i] <= _x[i + 1] for i in range(len(_points) - 1)
+        ):
+            raise ValidationException("The points must have ascending x coordinates.")
+        if len(_points) > 2 and not all(
+            (_x[i] != _x[i + 1]) or (_x[i + 1] != _x[i + 2])
+            for i in range(len(_points) - 2)
+        ):
+            raise ValidationException(
+                "There may not be more than two points with the same x coordinate."
             )
 
         if len(_points) == 0:
@@ -102,12 +105,19 @@ class PLF:
         """
         # The first point may be defined at the same (or a greater) x as the second
         # point to allow for discontinuities right at the start
-        if len(points) > 1:
-            assert points[0][0] <= points[1][0]
+        if len(points) > 1 and not (points[0][0] <= points[1][0]):
+            raise ValidationException(
+                "The x value of the second point must be greater"
+                + " or equal to the x value of the first point."
+            )
 
         # All further points must be defined at increasing x coordinates
         for p1, p2 in zip(points[1:], points[2:]):
-            assert p1[0] < p2[0]
+            if not (p1[0] < p2[0]):
+                raise ValidationException(
+                    "All points except for the second one must have greater x values"
+                    + " than their predecessor."
+                )
 
         _points = []
         for i, (x, y, slope) in enumerate(points):
@@ -290,7 +300,17 @@ class PLF:
         Returns:
             float: The result
         """
-        assert len(self.points) > 0 and x >= self.x_start and x <= self.x_end
+        if len(self.points) == 0:
+            raise RTCVisException(
+                "The PLF is undefined everywhere and thus does not have a value"
+                + " anywhere."
+            )
+        if not (x >= self.x_start and x <= self.x_end):
+            raise RTCVisException(
+                f"The PLF is only defined between {self.x_start} and {self.x_end} and"
+                + f" thus does not have a value at {x}."
+            )
+
         for idx, p in enumerate(self.points):
             if p.x == x:
                 return p.y
@@ -298,7 +318,7 @@ class PLF:
                 p_at_x = Line(self.points[idx - 1], self.points[idx]).point_at_x(x)
                 assert p_at_x is not None
                 return p_at_x.y
-        raise RuntimeError("Did not find points with corresponding x coordinates")
+        assert False, "Did not find points with corresponding x coordinates"
 
     def __call__(self, x: float) -> float:
         """Calls self.get_value(x)."""
@@ -500,7 +520,9 @@ def plf_merge(a: PLF, b: PLF) -> PLF:
         return a
 
     # The PLFs are not empty -> check that they're overlapping
-    assert b.x_start <= a.x_end and b.x_end >= a.x_start
+    if not (b.x_start <= a.x_end and b.x_end >= a.x_start):
+        raise RTCVisException("The provided PLFs must overlap.")
+
     # The general idea is to just take b from its start to a.x_start
     # and from a.x_end to its end. But we might have to remove some
     # points at the starts/ends because there may only be two points

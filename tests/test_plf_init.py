@@ -1,6 +1,7 @@
 import pytest
 
 from rtcvis import PLF
+from rtcvis.exceptions import ValidationException
 
 
 @pytest.mark.parametrize(
@@ -29,5 +30,5 @@ def test_plf_init(plf_points):
     ],
 )
 def test_plf_init_invalid(plf_points):
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValidationException):
         PLF(plf_points)

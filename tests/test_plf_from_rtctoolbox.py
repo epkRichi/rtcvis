@@ -1,6 +1,7 @@
 import pytest
 
 from rtcvis import PLF
+from rtcvis.exceptions import ValidationException
 
 
 @pytest.mark.parametrize(
@@ -61,5 +62,5 @@ def test_from_rtctoolbox(
 def test_from_rtctoolbox_invalid(
     points: list[tuple[float, float, float]], x_end: float
 ):
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValidationException):
         PLF.from_rtctoolbox(points, x_end)

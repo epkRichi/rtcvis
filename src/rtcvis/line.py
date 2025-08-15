@@ -1,5 +1,6 @@
 from typing import Optional
 
+from rtcvis.exceptions import ValidationException
 from rtcvis.point import Point
 
 
@@ -22,7 +23,9 @@ class Line:
             b (Point | tuple[float, float]): The second point, either given as an
                 instance of the Point class or as tuple of x and y coordinates.
         """
-        assert a != b
+
+        if a == b:
+            raise ValidationException("Points a and b must not be identical.")
 
         # Turn a and b into Points if they aren't already
         if not isinstance(a, Point):

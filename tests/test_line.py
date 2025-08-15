@@ -1,5 +1,6 @@
 import pytest
 
+from rtcvis.exceptions import ValidationException
 from rtcvis.line import Line, line_intersection
 from rtcvis.point import Point
 
@@ -31,7 +32,7 @@ def test_init(a, b, e_a, e_b, e_is_vertical, e_slope):
 
 def test_init_invalid():
     # Check that lines can't be created from identical Points
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValidationException):
         Line((3, 3), (3, 3))
 
 

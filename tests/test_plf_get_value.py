@@ -1,6 +1,7 @@
 import pytest
 
 from rtcvis import PLF
+from rtcvis.exceptions import RTCVisException
 
 
 @pytest.mark.parametrize(
@@ -13,7 +14,7 @@ from rtcvis import PLF
     ],
 )
 def test_plf_get_value_invalid(plf: PLF, x: float):
-    with pytest.raises(AssertionError):
+    with pytest.raises(RTCVisException):
         plf.get_value(x)
 
 
