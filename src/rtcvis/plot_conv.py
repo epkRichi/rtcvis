@@ -28,16 +28,13 @@ class ConvProperties:
         PADDING = 0.5
         is_deconv = conv_type in (ConvType.MAX_PLUS_DECONV, ConvType.MIN_PLUS_DECONV)
         if is_deconv:
-            min_deconv_result = conv(
-                a=a, b=b, conv_type=ConvType.MIN_PLUS_DECONV, start=0
-            )
-            max_deconv_result = conv(
-                a=a, b=b, conv_type=ConvType.MAX_PLUS_DECONV, start=0
-            )
+            min_deconv_result = conv(a=a, b=b, conv_type=ConvType.MIN_PLUS_DECONV)
+            max_deconv_result = conv(a=a, b=b, conv_type=ConvType.MAX_PLUS_DECONV)
             conv_min_x = (a.x_start - a.x_end) + b.x_start
             conv_max_x = max(a.x_end, b.x_end)
             conv_min_y = max_deconv_result.min.y
             conv_max_y = min_deconv_result.max.y
+            self.slider_min = a.x_start - b.x_end
             self.slider_max = a.x_end - b.x_start
             self.result = (
                 min_deconv_result
@@ -45,12 +42,13 @@ class ConvProperties:
                 else max_deconv_result
             )
         else:
-            min_conv_result = conv(a=a, b=b, conv_type=ConvType.MIN_PLUS_CONV, start=0)
-            max_conv_result = conv(a=a, b=b, conv_type=ConvType.MAX_PLUS_CONV, start=0)
+            min_conv_result = conv(a=a, b=b, conv_type=ConvType.MIN_PLUS_CONV)
+            max_conv_result = conv(a=a, b=b, conv_type=ConvType.MAX_PLUS_CONV)
             conv_min_x = min(-a.x_end, b.x_start)
             conv_max_x = b.x_end + (a.x_end - a.x_start)
             conv_min_y = min_conv_result.min.y
             conv_max_y = max_conv_result.max.y
+            self.slider_min = a.x_start + b.x_start
             self.slider_max = b.x_end + a.x_end
             self.result = (
                 min_conv_result
@@ -59,7 +57,6 @@ class ConvProperties:
             )
         ab_min_y = min(a.min.y, b.min.y)
         ab_max_y = max(a.max.y, b.max.y)
-        self.slider_min = 0
         self.min_x = conv_min_x - PADDING
         self.max_x = conv_max_x + PADDING
         self.min_y = min(ab_min_y, conv_min_y) - PADDING
@@ -219,7 +216,7 @@ def draw_conv(
     deltax_slider = Slider(
         ax=ax_slider,
         label=f"${DELTA}$",
-        valmin=0,
+        valmin=conv_properties.slider_min,
         valmax=conv_properties.slider_max,
         valinit=initial_x,
         valfmt="%.2f",
