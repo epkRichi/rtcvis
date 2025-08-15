@@ -104,7 +104,7 @@ def plot_conv() -> None:
         try:
             split_at = text.rindex(",")
             plf_str, x_end_str = text[:split_at], text[split_at + 1 :]
-            new_plf = PLF.from_rtctoolbox(eval(plf_str), int(x_end_str))
+            new_plf = PLF.from_rtctoolbox(eval(plf_str), float(x_end_str))
             if selector == "a":
                 a = new_plf
             elif selector == "b":
