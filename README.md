@@ -5,7 +5,7 @@ rtcvis is an educational tool that can create interactive visualizations for con
 ## Installation
 
 ```shell
-pip install rtcvis
+pip install rtcvis\[plot\]
 ```
 
 ## Usage
@@ -33,6 +33,6 @@ Note that Curves are allowed to have discontinuities
 ## Development
 
 ```shell
-pip install -e .\[dev\]
+pip install -e .\[dev,plot\]
 pre-commit install
 ```

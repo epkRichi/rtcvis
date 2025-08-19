@@ -77,6 +77,11 @@ def plot_conv() -> None:
     sum/difference of those two and the full result of the convolution. All functions
     can individually be toggled in the legend.
     """
+    if plt is None:
+        raise ImportError(
+            "Plotting requires matplotlib. Install with `pip install rtcvis[plot]`."
+        )
+
     # create a figure with all required axes
     fig, axs = plt.subplot_mosaic(
         "aaaa;bbbb;0123;pppp;ssss",

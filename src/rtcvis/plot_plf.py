@@ -7,6 +7,10 @@ if TYPE_CHECKING:
 
 
 def plot_plfs(plfs: Sequence["PLF"]):
+    if plt is None:
+        raise ImportError(
+            "Plotting requires matplotlib. Install with `pip install rtcvis[plot]`."
+        )
     fig, ax = plt.subplots()
     ax.set_aspect("equal", adjustable="box")
 
