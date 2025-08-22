@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>blah</title>
+    <script
+      src="https://cdn.plot.ly/plotly-3.1.0.min.js"
+      charset="utf-8"
+    ></script>
+  </head>
+  <body>
+    <div id="tester" style="width: 600px; height: 250px"></div>
+    <input id="slider" type="range" min="0" max="3" step="any" />
+  </body>
+  <script>
+    TESTER = document.getElementById("tester");
+    Plotly.newPlot(
+      TESTER,
+      [
+        {
+          x: [1, 2, 3, 4, 5],
+          y: [1, 2, 4, 8, 16],
+        },
+      ],
+      {
+        margin: { t: 0 },
+      }
+    );
+    const input = document.querySelector("#slider");
+    input.addEventListener("input", (event) => {
+      let dx = Number(event.target.value);
+      Plotly.restyle(
+        TESTER,
+
+          {
+            x: [[1 + dx, 2 + dx, 3 + dx, 4 + dx, 5 + dx]],
+            y: [[1, 2, 4, 8, 16]],
+          },
+
+
+      )
+    });
+  </script>
+</html>
