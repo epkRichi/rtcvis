@@ -11,61 +11,63 @@ function toJsSafe(proxy) {
   return convertedProxy;
 }
 
-TESTER = document.getElementById("tester");
-Plotly.newPlot(
-  TESTER,
-  [
-    {
-      x: [1, 2, 3, 4, 5],
-      y: [1, 2, 4, 8, 16],
-    },
-  ],
-  {
-    margin: { t: 0 },
-  }
-);
-const input = document.querySelector("#slider");
-input.addEventListener("input", (event) => {
-  let dx = Number(event.target.value);
-  Plotly.restyle(
-    TESTER,
-
-    {
-      x: [[1 + dx, 2 + dx, 3 + dx, 4 + dx, 5 + dx]],
-      y: [[1, 2, 4, 8, 16]],
-    }
-  );
-});
-let plf_a, plf_b;
-
 async function main() {
+  const plot = document.querySelector("#plot");
+  const input = document.querySelector("#slider");
+
   let pyodide = await loadPyodide();
   await pyodide.loadPackage("micropip");
   const micropip = pyodide.pyimport("micropip");
   await micropip.install("../dist/rtcvis-0.2.0-py3-none-any.whl");
-  pyodide.runPython(`
-        from rtcvis import PLF, conv_at_x, ConvType
-      `);
-  // let conv_at_x = pyodide.globals.get("conv_at_x");
-  // let ConvType = pyodide.globals.get("ConvType");
-  let plf_a_points = [
-    [0, 0, 0],
-    [1, 1, 0],
-    [2, 2, 0],
-    [3, 3, 0],
-  ];
-  let plf_a_length = 5;
-  // let plf_b_str = "[(0, 0, 0), (1, 0, 1)], 5";
-  let PLF = pyodide.globals.get("PLF");
-  let plf_a = PLF.from_rtctoolbox(plf_a_points, plf_a_length);
-  // let plf_a = pyodide.runPython("PLF.from_rtctoolbox(" + plf_a_str + ")");
-  // let plf_b = pyodide.runPython("PLF.from_rtctoolbox(" + plf_b_str + ")");
-  // let conv_result = conv_at_x(plf_a, plf_b, 0, ConvType.MIN_PLUS_CONVOLUION);
+  pyodide.runPython("from rtcvis import PLF, conv_at_x, ConvType");
 
-  Plotly.restyle(TESTER, {
-    x: [toJsSafe(plf_a.x)],
-    y: [toJsSafe(plf_a.y)],
+  let conv_at_x = pyodide.globals.get("conv_at_x");
+  let ConvType = pyodide.globals.get("ConvType");
+  let PLF = pyodide.globals.get("PLF");
+
+  let plf_a = PLF.from_rtctoolbox(
+    [
+      [0, 0, 0],
+      [1, 1, 0],
+      [2, 2, 0],
+      [3, 3, 0],
+    ],
+    5
+  );
+  let plf_b = PLF.from_rtctoolbox([[0, 0, 0], [1, 0, 1]], 5);
+
+  Plotly.newPlot(
+    plot,
+    [
+      {
+        x: [],
+        y: [],
+      },
+    ],
+    {
+      margin: { t: 0 },
+    }
+  );
+
+  let conv_result = null;
+  function restyle(value) {
+    conv_result = conv_at_x(plf_a, plf_b, value, ConvType.MIN_PLUS_CONV);
+    Plotly.restyle(
+      plot,
+      {
+        x: [toJsSafe(conv_result.transformed_a.x)],
+        y: [toJsSafe(conv_result.transformed_a.y)],
+      }
+    );
+  }
+
+  input.addEventListener("input", (event) => {
+    restyle(Number(event.target.value));
   });
+
+  restyle(0);
+
   console.log("main finished");
 }
+
 main();
