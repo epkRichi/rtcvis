@@ -7,6 +7,10 @@
       src="https://cdn.plot.ly/plotly-3.1.0.min.js"
       charset="utf-8"
     ></script>
+    <script
+      src="https://cdn.jsdelivr.net/pyodide/v0.28.2/full/pyodide.js"
+      charset="utf-8"
+    ></script>
   </head>
   <body>
     <div id="tester" style="width: 600px; height: 250px"></div>
@@ -32,13 +36,37 @@
       Plotly.restyle(
         TESTER,
 
-          {
-            x: [[1 + dx, 2 + dx, 3 + dx, 4 + dx, 5 + dx]],
-            y: [[1, 2, 4, 8, 16]],
-          },
-
-
-      )
+        {
+          x: [[1 + dx, 2 + dx, 3 + dx, 4 + dx, 5 + dx]],
+          y: [[1, 2, 4, 8, 16]],
+        }
+      );
     });
+    let plf_a, plf_b;
+    async function main() {
+      let pyodide = await loadPyodide();
+      await pyodide.loadPackage("micropip");
+      const micropip = pyodide.pyimport("micropip");
+      await micropip.install("../dist/rtcvis-0.2.0-py3-none-any.whl");
+      pyodide.runPython(`
+        from rtcvis import PLF, conv_at_x, ConvType
+      `);
+      let conv_at_x = pyodide.globals.get("conv_at_x");
+      let ConvType = pyodide.globals.get("ConvType");
+      let plf_a_str = "[(0, 0, 0), (1, 1, 0), (2, 2, 0), (3, 3, 0)], 5";
+      let plf_b_str = "[(0, 0, 0), (1, 0, 1)], 5";
+      let plf_a = pyodide.runPython("PLF.from_rtctoolbox(" + plf_a_str + ")");
+      let plf_b = pyodide.runPython("PLF.from_rtctoolbox(" + plf_b_str + ")");
+      let conv_result = conv_at_x(plf_a, plf_b, 0, ConvType.MIN_PLUS_CONVOLUION);
+      Plotly.restyle(
+        TESTER,
+        {
+          x: [plf_a.x],
+          y: [plf_a.y],
+        }
+      );
+      console.log("main finished");
+    }
+    main();
   </script>
 </html>
