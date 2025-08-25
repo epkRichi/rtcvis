@@ -34,38 +34,80 @@ async function main() {
     ],
     5
   );
-  let plf_b = PLF.from_rtctoolbox([[0, 0, 0], [1, 0, 1]], 5);
+  let plf_b = PLF.from_rtctoolbox(
+    [
+      [0, 0, 0],
+      [1, 0, 1],
+    ],
+    5
+  );
+
+  let conv_result = conv_at_x(plf_a, plf_b, 0, ConvType.MIN_PLUS_CONV);
+
+  let trace_a = {
+    x: [toJsSafe(plf_a.x)],
+    y: [toJsSafe(plf_a.y)],
+  };
+
+  let trace_b = {
+    x: [toJsSafe(plf_b.x)],
+    y: [toJsSafe(plf_b.y)],
+  };
+
+  let trace_transformed_a = {
+    x: [toJsSafe(conv_result.transformed_a.x)],
+    y: [toJsSafe(conv_result.transformed_a.y)],
+  };
+
+  let trace_sum = {
+    x: [toJsSafe(conv_result.sum.x)],
+    y: [toJsSafe(conv_result.sum.y)],
+  };
+
+  // let trace_result = {
+  //   x: [toJsSafe(conv_result.result.x)],
+  //   y: [toJsSafe(conv_result.result.y)],
+  // };
 
   Plotly.newPlot(
     plot,
-    [
-      {
-        x: [],
-        y: [],
-      },
-    ],
+    [trace_a, trace_b, trace_transformed_a, trace_sum],
     {
       margin: { t: 0 },
     }
   );
 
-  let conv_result = null;
   function restyle(value) {
     conv_result = conv_at_x(plf_a, plf_b, value, ConvType.MIN_PLUS_CONV);
+
+    trace_transformed_a = {
+      x: [toJsSafe(conv_result.transformed_a.x)],
+      y: [toJsSafe(conv_result.transformed_a.y)],
+    };
+
+    trace_sum = {
+      x: [toJsSafe(conv_result.sum.x)],
+      y: [toJsSafe(conv_result.sum.y)],
+    };
+
+    // trace_result = {
+    //   x: [toJsSafe(conv_result.result.x)],
+    //   y: [toJsSafe(conv_result.result.y)],
+    // };
+
     Plotly.restyle(
       plot,
       {
-        x: [toJsSafe(conv_result.transformed_a.x)],
-        y: [toJsSafe(conv_result.transformed_a.y)],
-      }
+        x: [trace_transformed_a.x, trace_sum.x],
+        y: [trace_transformed_a.y, trace_sum.y],
+      },
+      [2, 3]
     );
   }
 
   input.addEventListener("input", (event) => {
     restyle(Number(event.target.value));
   });
-
-  restyle(0);
 
   console.log("main finished");
 }
