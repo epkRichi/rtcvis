@@ -93,12 +93,15 @@ async function main() {
     y: toJsSafe(conv_result.sum.y),
     mode: "lines",
     name: conv_type.sum_desc,
+    legendgroup: "group_sum",
+    showlegend: true,
   };
 
   let trace_sum_marker = {
     x: [conv_result.result.x],
     y: [conv_result.result.y],
     mode: "markers",
+    legendgroup: "group_sum",
     showlegend: false,
   };
 
@@ -107,12 +110,15 @@ async function main() {
     y: toJsSafe(conv_properties.result.y),
     mode: "lines",
     name: conv_type.operator_desc,
+    legendgroup: "group_result",
+    showlegend: true,
   };
 
   let trace_result_marker = {
     x: [Number(slider.value)],
     y: [conv_properties.result(Number(slider.value))],
     mode: "markers",
+    legendgroup: "group_result",
     showlegend: false,
   };
 
