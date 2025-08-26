@@ -13,7 +13,7 @@ function toJsSafe(proxy) {
 
 async function main() {
   const plot = document.querySelector("#plot");
-  const input = document.querySelector("#slider");
+  const slider = document.querySelector("#slider");
 
   let pyodide = await loadPyodide();
   await pyodide.loadPackage("micropip");
@@ -27,6 +27,7 @@ async function main() {
   let ConvType = pyodide.globals.get("ConvType");
   let PLF = pyodide.globals.get("PLF");
   let ConvProperties = pyodide.globals.get("ConvProperties");
+
 
   let plf_a = PLF.from_rtctoolbox(
     [
@@ -47,6 +48,10 @@ async function main() {
 
   let conv_result = conv_at_x(plf_a, plf_b, 0, ConvType.MIN_PLUS_CONV);
   let conv_properties = ConvProperties(plf_a, plf_b, ConvType.MIN_PLUS_CONV);
+
+  slider.min = conv_properties.slider_min
+  slider.max = conv_properties.slider_max
+  slider.value = conv_properties.slider_min
 
   let trace_a = {
     x: toJsSafe(plf_a.x),
@@ -97,6 +102,8 @@ async function main() {
     ],
     {
       margin: { t: 0 },
+      xaxis: { range: [conv_properties.min_x, conv_properties.max_x] },
+      yaxis: { range: [conv_properties.min_y, conv_properties.max_y] },
     }
   );
 
@@ -128,7 +135,7 @@ async function main() {
     );
   }
 
-  input.addEventListener("input", (event) => {
+  slider.addEventListener("input", (event) => {
     restyle(Number(event.target.value));
   });
 
