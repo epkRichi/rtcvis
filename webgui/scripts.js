@@ -1,3 +1,11 @@
+/**
+ * Converts the given proxy to a js object that is not linked to the original
+ * python object anymore. Destroys all intermediary proxies and the given proxy
+ * to prevent memory leaks.
+ *
+ * @param {PyProxy} proxy The proxy to be converted.
+ * @returns {any} The converted proxy.
+ */
 function toJsSafe(proxy) {
   if (proxy === null || typeof proxy === "undefined") {
     return null;
@@ -12,9 +20,11 @@ function toJsSafe(proxy) {
 }
 
 async function main() {
+  // get references to the plot and slider DOM elements
   const plot = document.querySelector("#plot");
   const slider = document.querySelector("#slider");
 
+  // load and initialize pyodide
   let pyodide = await loadPyodide();
   await pyodide.loadPackage("micropip");
   const micropip = pyodide.pyimport("micropip");
@@ -22,13 +32,12 @@ async function main() {
   pyodide.runPython(
     "from rtcvis import PLF, conv_at_x, ConvType, ConvProperties"
   );
-
   let conv_at_x = pyodide.globals.get("conv_at_x");
   let ConvType = pyodide.globals.get("ConvType");
   let PLF = pyodide.globals.get("PLF");
   let ConvProperties = pyodide.globals.get("ConvProperties");
 
-
+  // create the PLFs to plot (static for now)
   let plf_a = PLF.from_rtctoolbox(
     [
       [0, 0, 0],
@@ -46,13 +55,16 @@ async function main() {
     5
   );
 
+  // compute the convolution
   let conv_result = conv_at_x(plf_a, plf_b, 0, ConvType.MIN_PLUS_CONV);
   let conv_properties = ConvProperties(plf_a, plf_b, ConvType.MIN_PLUS_CONV);
 
-  slider.min = conv_properties.slider_min
-  slider.max = conv_properties.slider_max
-  slider.value = conv_properties.slider_min
+  // configure the slider
+  slider.min = conv_properties.slider_min;
+  slider.max = conv_properties.slider_max;
+  slider.value = conv_properties.slider_min;
 
+  // create the traces to plot
   let trace_a = {
     x: toJsSafe(plf_a.x),
     y: toJsSafe(plf_a.y),
@@ -83,13 +95,13 @@ async function main() {
     mode: "lines",
   };
 
-  // result is a Point and x and y are ints (primitives), so no toJs is needed here
   let trace_sum_marker = {
     x: [conv_result.result.x],
     y: [conv_result.result.y],
     mode: "markers",
   };
 
+  // Create the plot
   Plotly.newPlot(
     plot,
     [
@@ -107,6 +119,11 @@ async function main() {
     }
   );
 
+  /**
+   * Updates the plot to a new delta value.
+   *
+   * @param {Number} value The new delta (x) value.
+   */
   function restyle(value) {
     conv_result = conv_at_x(plf_a, plf_b, value, ConvType.MIN_PLUS_CONV);
 
@@ -135,6 +152,7 @@ async function main() {
     );
   }
 
+  // Add a listener to the slider
   slider.addEventListener("input", (event) => {
     restyle(Number(event.target.value));
   });
