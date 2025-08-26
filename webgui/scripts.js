@@ -47,31 +47,37 @@ async function main() {
   let trace_a = {
     x: toJsSafe(plf_a.x),
     y: toJsSafe(plf_a.y),
+    mode: "lines",
   };
 
   let trace_b = {
     x: toJsSafe(plf_b.x),
     y: toJsSafe(plf_b.y),
+    mode: "lines",
   };
 
   let trace_transformed_a = {
     x: toJsSafe(conv_result.transformed_a.x),
     y: toJsSafe(conv_result.transformed_a.y),
+    mode: "lines",
   };
 
   let trace_sum = {
     x: toJsSafe(conv_result.sum.x),
     y: toJsSafe(conv_result.sum.y),
+    mode: "lines",
   };
 
-  // let trace_result = {
-  //   x: [toJsSafe(conv_result.result.x)],
-  //   y: [toJsSafe(conv_result.result.y)],
-  // };
+  // result is a Point and x and y are ints (primitives), so no toJs is needed here
+  let trace_sum_marker = {
+    x: [conv_result.result.x],
+    y: [conv_result.result.y],
+    mode: "markers",
+  };
 
   Plotly.newPlot(
     plot,
-    [trace_a, trace_b, trace_transformed_a, trace_sum],
+    [trace_a, trace_b, trace_transformed_a, trace_sum, trace_sum_marker],
     {
       margin: { t: 0 },
     }
@@ -90,18 +96,18 @@ async function main() {
       y: toJsSafe(conv_result.sum.y),
     };
 
-    // trace_result = {
-    //   x: [toJsSafe(conv_result.result.x)],
-    //   y: [toJsSafe(conv_result.result.y)],
-    // };
+    trace_sum_marker = {
+      x: [conv_result.result.x],
+      y: [conv_result.result.y],
+    };
 
     Plotly.restyle(
       plot,
       {
-        x: [trace_transformed_a.x, trace_sum.x],
-        y: [trace_transformed_a.y, trace_sum.y],
+        x: [trace_transformed_a.x, trace_sum.x, trace_sum_marker.x],
+        y: [trace_transformed_a.y, trace_sum.y, trace_sum_marker.y],
       },
-      [2, 3]
+      [2, 3, 4]
     );
   }
 
