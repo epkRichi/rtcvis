@@ -98,6 +98,7 @@ async function main() {
     x: [conv_result.result.x],
     y: [conv_result.result.y],
     mode: "markers",
+    showlegend: false,
   };
 
   let trace_result = {
@@ -111,6 +112,7 @@ async function main() {
     x: [Number(slider.value)],
     y: [conv_properties.result(Number(slider.value))],
     mode: "markers",
+    showlegend: false,
   };
 
   // Create the plot
