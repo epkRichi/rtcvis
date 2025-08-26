@@ -133,6 +133,15 @@ async function main() {
       xaxis: { range: [conv_properties.min_x, conv_properties.max_x] },
       yaxis: { range: [conv_properties.min_y, conv_properties.max_y] },
       legend: { x: 1, y: 0.5 },
+      colorway: [
+        "#1f77b4",
+        "#ff7f0e",
+        "#2ca02c",
+        "#d62728",
+        "#d62728",
+        "#9467bd",
+        "#9467bd",
+      ],
     }
   );
 
