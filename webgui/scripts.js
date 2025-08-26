@@ -71,6 +71,7 @@ async function main() {
     y: toJsSafe(plf_a.y),
     mode: "lines",
     name: "$a(\\lambda)$",
+    visible: "legendonly",
   };
 
   let trace_transformed_a = {
@@ -131,6 +132,7 @@ async function main() {
       margin: { t: 0 },
       xaxis: { range: [conv_properties.min_x, conv_properties.max_x] },
       yaxis: { range: [conv_properties.min_y, conv_properties.max_y] },
+      legend: { x: 1, y: 0.5 },
     }
   );
 
