@@ -54,10 +54,11 @@ async function main() {
     ],
     5
   );
+  let conv_type = ConvType.MIN_PLUS_CONV;
 
   // compute the convolution
-  let conv_result = conv_at_x(plf_a, plf_b, 0, ConvType.MIN_PLUS_CONV);
-  let conv_properties = ConvProperties(plf_a, plf_b, ConvType.MIN_PLUS_CONV);
+  let conv_result = conv_at_x(plf_a, plf_b, 0, conv_type);
+  let conv_properties = ConvProperties(plf_a, plf_b, conv_type);
 
   // configure the slider
   slider.min = conv_properties.slider_min;
@@ -69,36 +70,28 @@ async function main() {
     x: toJsSafe(plf_a.x),
     y: toJsSafe(plf_a.y),
     mode: "lines",
-  };
-
-  let trace_b = {
-    x: toJsSafe(plf_b.x),
-    y: toJsSafe(plf_b.y),
-    mode: "lines",
-  };
-
-  let trace_result = {
-    x: toJsSafe(conv_properties.result.x),
-    y: toJsSafe(conv_properties.result.y),
-    mode: "lines",
-  };
-
-  let trace_result_marker = {
-    x: [Number(slider.value)],
-    y: [conv_properties.result(Number(slider.value))],
-    mode: "markers",
+    name: "$a(\\lambda)$",
   };
 
   let trace_transformed_a = {
     x: toJsSafe(conv_result.transformed_a.x),
     y: toJsSafe(conv_result.transformed_a.y),
     mode: "lines",
+    name: "$a(\\Delta - \\lambda)$",
+  };
+
+  let trace_b = {
+    x: toJsSafe(plf_b.x),
+    y: toJsSafe(plf_b.y),
+    mode: "lines",
+    name: "$b(\\lambda)$",
   };
 
   let trace_sum = {
     x: toJsSafe(conv_result.sum.x),
     y: toJsSafe(conv_result.sum.y),
     mode: "lines",
+    name: conv_type.sum_desc,
   };
 
   let trace_sum_marker = {
@@ -107,17 +100,30 @@ async function main() {
     mode: "markers",
   };
 
+  let trace_result = {
+    x: toJsSafe(conv_properties.result.x),
+    y: toJsSafe(conv_properties.result.y),
+    mode: "lines",
+    name: conv_type.operator_desc,
+  };
+
+  let trace_result_marker = {
+    x: [Number(slider.value)],
+    y: [conv_properties.result(Number(slider.value))],
+    mode: "markers",
+  };
+
   // Create the plot
   Plotly.newPlot(
     plot,
     [
       trace_a,
-      trace_b,
-      trace_result,
-      trace_result_marker,
       trace_transformed_a,
+      trace_b,
       trace_sum,
       trace_sum_marker,
+      trace_result,
+      trace_result_marker,
     ],
     {
       margin: { t: 0 },
@@ -132,12 +138,7 @@ async function main() {
    * @param {Number} value The new delta (x) value.
    */
   function restyle(value) {
-    conv_result = conv_at_x(plf_a, plf_b, value, ConvType.MIN_PLUS_CONV);
-
-    trace_result_marker = {
-      x: [value],
-      y: [conv_properties.result(value)],
-    };
+    conv_result = conv_at_x(plf_a, plf_b, value, conv_type);
 
     trace_transformed_a = {
       x: toJsSafe(conv_result.transformed_a.x),
@@ -154,23 +155,28 @@ async function main() {
       y: [conv_result.result.y],
     };
 
+    trace_result_marker = {
+      x: [value],
+      y: [conv_properties.result(value)],
+    };
+
     Plotly.restyle(
       plot,
       {
         x: [
-          trace_result_marker.x,
           trace_transformed_a.x,
           trace_sum.x,
           trace_sum_marker.x,
+          trace_result_marker.x,
         ],
         y: [
-          trace_result_marker.y,
           trace_transformed_a.y,
           trace_sum.y,
           trace_sum_marker.y,
+          trace_result_marker.y,
         ],
       },
-      [3, 4, 5, 6]
+      [1, 3, 4, 6]
     );
   }
 
