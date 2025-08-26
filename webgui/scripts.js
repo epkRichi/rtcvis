@@ -83,6 +83,12 @@ async function main() {
     mode: "lines",
   };
 
+  let trace_result_marker = {
+    x: [Number(slider.value)],
+    y: [conv_properties.result(Number(slider.value))],
+    mode: "markers",
+  };
+
   let trace_transformed_a = {
     x: toJsSafe(conv_result.transformed_a.x),
     y: toJsSafe(conv_result.transformed_a.y),
@@ -108,6 +114,7 @@ async function main() {
       trace_a,
       trace_b,
       trace_result,
+      trace_result_marker,
       trace_transformed_a,
       trace_sum,
       trace_sum_marker,
@@ -127,6 +134,11 @@ async function main() {
   function restyle(value) {
     conv_result = conv_at_x(plf_a, plf_b, value, ConvType.MIN_PLUS_CONV);
 
+    trace_result_marker = {
+      x: [value],
+      y: [conv_properties.result(value)],
+    };
+
     trace_transformed_a = {
       x: toJsSafe(conv_result.transformed_a.x),
       y: toJsSafe(conv_result.transformed_a.y),
@@ -145,10 +157,20 @@ async function main() {
     Plotly.restyle(
       plot,
       {
-        x: [trace_transformed_a.x, trace_sum.x, trace_sum_marker.x],
-        y: [trace_transformed_a.y, trace_sum.y, trace_sum_marker.y],
+        x: [
+          trace_result_marker.x,
+          trace_transformed_a.x,
+          trace_sum.x,
+          trace_sum_marker.x,
+        ],
+        y: [
+          trace_result_marker.y,
+          trace_transformed_a.y,
+          trace_sum.y,
+          trace_sum_marker.y,
+        ],
       },
-      [3, 4, 5]
+      [3, 4, 5, 6]
     );
   }
 
