@@ -1,4 +1,4 @@
-from rtcvis.conv import ConvType, conv, conv_at_x
+from rtcvis.conv import ConvProperties, ConvType, conv, conv_at_x
 from rtcvis.plf import PLF
 from rtcvis.point import Point
 
@@ -8,4 +8,13 @@ try:
 except ModuleNotFoundError:
     pass
 
-__all__ = ("Point", "PLF", "ConvType", "conv", "conv_at_x", "plot_plfs", "plot_conv")
+__all__ = (
+    "Point",
+    "PLF",
+    "ConvType",
+    "conv",
+    "conv_at_x",
+    "plot_plfs",
+    "plot_conv",
+    "ConvProperties",
+)

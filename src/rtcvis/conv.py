@@ -112,6 +112,55 @@ class ConvAtXResult:
         return self._result
 
 
+class ConvProperties:
+    def __init__(self, a: PLF, b: PLF, conv_type: ConvType):
+        """Computes several properties needed for plotting convolutions.
+
+        Computes the min and max values for the slider, x axis and y axis as well as
+        the result of the convolution.
+
+        Args:
+            a (PLF): PLF a.
+            b (PLF): PLF b.
+            conv_type (ConvType): The type of convolution.
+        """
+        # allow computing the convolution for all x where a and b overlap
+        PADDING = 0.5
+        is_deconv = conv_type in (ConvType.MAX_PLUS_DECONV, ConvType.MIN_PLUS_DECONV)
+        if is_deconv:
+            min_deconv_result = conv(a=a, b=b, conv_type=ConvType.MIN_PLUS_DECONV)
+            max_deconv_result = conv(a=a, b=b, conv_type=ConvType.MAX_PLUS_DECONV)
+            conv_min_y = max_deconv_result.min.y
+            conv_max_y = min_deconv_result.max.y
+            self.slider_min = a.x_start - b.x_end
+            self.slider_max = a.x_end - b.x_start
+            self.result = (
+                min_deconv_result
+                if conv_type == ConvType.MIN_PLUS_DECONV
+                else max_deconv_result
+            )
+        else:
+            min_conv_result = conv(a=a, b=b, conv_type=ConvType.MIN_PLUS_CONV)
+            max_conv_result = conv(a=a, b=b, conv_type=ConvType.MAX_PLUS_CONV)
+            conv_min_y = min_conv_result.min.y
+            conv_max_y = max_conv_result.max.y
+            self.slider_min = a.x_start + b.x_start
+            self.slider_max = b.x_end + a.x_end
+            self.result = (
+                min_conv_result
+                if conv_type == ConvType.MIN_PLUS_CONV
+                else max_conv_result
+            )
+        self.min_x = (
+            min(a.x_start, b.x_start - (a.x_end - a.x_start), self.slider_min) - PADDING
+        )
+        self.max_x = (
+            max(a.x_end, b.x_end + (a.x_end - a.x_start), self.slider_max) + PADDING
+        )
+        self.min_y = min(a.min.y, b.min.y, conv_min_y) - PADDING
+        self.max_y = max(a.max.y, b.max.y, conv_max_y) + PADDING
+
+
 def conv_at_x(a: PLF, b: PLF, delta_x: float, conv_type: ConvType) -> ConvAtXResult:
     """Computes the given type of convolution of a and b at the given x.
 

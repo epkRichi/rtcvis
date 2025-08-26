@@ -19,11 +19,14 @@ async function main() {
   await pyodide.loadPackage("micropip");
   const micropip = pyodide.pyimport("micropip");
   await micropip.install("../dist/rtcvis-0.2.0-py3-none-any.whl");
-  pyodide.runPython("from rtcvis import PLF, conv_at_x, ConvType");
+  pyodide.runPython(
+    "from rtcvis import PLF, conv_at_x, ConvType, ConvProperties"
+  );
 
   let conv_at_x = pyodide.globals.get("conv_at_x");
   let ConvType = pyodide.globals.get("ConvType");
   let PLF = pyodide.globals.get("PLF");
+  let ConvProperties = pyodide.globals.get("ConvProperties");
 
   let plf_a = PLF.from_rtctoolbox(
     [
@@ -43,6 +46,7 @@ async function main() {
   );
 
   let conv_result = conv_at_x(plf_a, plf_b, 0, ConvType.MIN_PLUS_CONV);
+  let conv_properties = ConvProperties(plf_a, plf_b, ConvType.MIN_PLUS_CONV);
 
   let trace_a = {
     x: toJsSafe(plf_a.x),
@@ -53,6 +57,12 @@ async function main() {
   let trace_b = {
     x: toJsSafe(plf_b.x),
     y: toJsSafe(plf_b.y),
+    mode: "lines",
+  };
+
+  let trace_result = {
+    x: toJsSafe(conv_properties.result.x),
+    y: toJsSafe(conv_properties.result.y),
     mode: "lines",
   };
 
@@ -77,7 +87,14 @@ async function main() {
 
   Plotly.newPlot(
     plot,
-    [trace_a, trace_b, trace_transformed_a, trace_sum, trace_sum_marker],
+    [
+      trace_a,
+      trace_b,
+      trace_result,
+      trace_transformed_a,
+      trace_sum,
+      trace_sum_marker,
+    ],
     {
       margin: { t: 0 },
     }
@@ -107,7 +124,7 @@ async function main() {
         x: [trace_transformed_a.x, trace_sum.x, trace_sum_marker.x],
         y: [trace_transformed_a.y, trace_sum.y, trace_sum_marker.y],
       },
-      [2, 3, 4]
+      [3, 4, 5]
     );
   }
 
