@@ -1,3 +1,4 @@
+import ast
 import operator
 from typing import Sequence, Union
 
@@ -170,6 +171,25 @@ class PLF:
                 break
 
         return PLF(_points)
+
+    @classmethod
+    def from_rtctoolbox_str(cls, input: str) -> "PLF":
+        try:
+            points, x_end = ast.literal_eval(input)
+            if not (
+                isinstance(points, list)
+                and all(
+                    isinstance(a, tuple)
+                    and len(a) == 3
+                    and all(isinstance(b, (int, float)) for b in a)
+                    for a in points
+                )
+                and isinstance(x_end, (int, float))
+            ):
+                raise Exception()
+            return PLF.from_rtctoolbox(points, x_end)
+        except Exception:
+            raise ValidationException("The given input is not a valid PLF.")
 
     def start_truncated(self, x_start: float) -> "PLF":
         """Creates a new PLF that is truncated at the start.

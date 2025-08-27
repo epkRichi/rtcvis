@@ -23,6 +23,8 @@ async function main() {
   // get references to the plot and slider DOM elements
   const plot = document.querySelector("#plot");
   const slider = document.querySelector("#slider");
+  const input_a = document.querySelector("#plf_a");
+  const input_b = document.querySelector("#plf_b");
 
   // load and initialize pyodide
   let pyodide = await loadPyodide();
@@ -37,33 +39,24 @@ async function main() {
   let PLF = pyodide.globals.get("PLF");
   let ConvProperties = pyodide.globals.get("ConvProperties");
 
+  // put default values into the textfields
+  input_a.value = "[(0, 0, 0), (1, 1, 0), (2, 2, 0), (3, 3, 0)], 5";
+  input_b.value = "[(0, 0, 0), (1, 0, 1)], 4";
+
   // create the PLFs to plot (static for now)
-  let plf_a = PLF.from_rtctoolbox(
-    [
-      [0, 0, 0],
-      [1, 1, 0],
-      [2, 2, 0],
-      [3, 3, 0],
-    ],
-    5
-  );
-  let plf_b = PLF.from_rtctoolbox(
-    [
-      [0, 0, 0],
-      [1, 0, 1],
-    ],
-    5
-  );
+  let plf_a = PLF.from_rtctoolbox_str(input_a.value);
+  let plf_b = PLF.from_rtctoolbox_str(input_b.value);
   let conv_type = ConvType.MIN_PLUS_CONV;
 
   // compute the convolution
-  let conv_result = conv_at_x(plf_a, plf_b, 0, conv_type);
   let conv_properties = ConvProperties(plf_a, plf_b, conv_type);
+  let current_x = conv_properties.slider_min;
+  let conv_result = conv_at_x(plf_a, plf_b, current_x, conv_type);
 
   // configure the slider
   slider.min = conv_properties.slider_min;
   slider.max = conv_properties.slider_max;
-  slider.value = conv_properties.slider_min;
+  slider.value = current_x;
 
   // create the traces to plot
   let trace_a = {
@@ -115,8 +108,8 @@ async function main() {
   };
 
   let trace_result_marker = {
-    x: [Number(slider.value)],
-    y: [conv_properties.result(Number(slider.value))],
+    x: [current_x],
+    y: [conv_properties.result(current_x)],
     mode: "markers",
     legendgroup: "group_result",
     showlegend: false,
@@ -152,12 +145,10 @@ async function main() {
   );
 
   /**
-   * Updates the plot to a new delta value.
-   *
-   * @param {Number} value The new delta (x) value.
+   * Updates the plot to a new current_x value.
    */
-  function restyle(value) {
-    conv_result = conv_at_x(plf_a, plf_b, value, conv_type);
+  function current_x_changed() {
+    conv_result = conv_at_x(plf_a, plf_b, current_x, conv_type);
 
     trace_transformed_a = {
       x: toJsSafe(conv_result.transformed_a.x),
@@ -175,8 +166,8 @@ async function main() {
     };
 
     trace_result_marker = {
-      x: [value],
-      y: [conv_properties.result(value)],
+      x: [current_x],
+      y: [conv_properties.result(current_x)],
     };
 
     Plotly.restyle(
@@ -199,10 +190,81 @@ async function main() {
     );
   }
 
+  /**
+   * Redraws the entire plot. Should be used when the PLFs or the convolution type
+   * change. Will also update the slider and and axis limits. Internally calls the
+   * current_x_changed function but also updates the other traces.
+   */
+  function redraw_plot() {
+    // Recompute the convolution
+    conv_properties = ConvProperties(plf_a, plf_b, conv_type);
+    current_x = Math.min(
+      conv_properties.slider_max,
+      Math.max(conv_properties.slider_min, current_x)
+    );
+
+    // Reset slider limits
+    slider.min = conv_properties.slider_min;
+    slider.max = conv_properties.slider_max;
+    slider.value = current_x;
+
+    // Recompute all traces that aren't touched by current_x_changed
+    trace_a = {
+      x: toJsSafe(plf_a.x),
+      y: toJsSafe(plf_a.y),
+    };
+
+    trace_b = {
+      x: toJsSafe(plf_b.x),
+      y: toJsSafe(plf_b.y),
+    };
+
+    trace_result = {
+      x: toJsSafe(conv_properties.result.x),
+      y: toJsSafe(conv_properties.result.y),
+    };
+
+    // Update the plot, inlcuding the axis limits
+    Plotly.update(
+      plot,
+      {
+        x: [trace_a.x, trace_b.x, trace_result.x],
+        y: [trace_a.y, trace_b.y, trace_result.y],
+      },
+      {
+        xaxis: { range: [conv_properties.min_x, conv_properties.max_x] },
+        yaxis: { range: [conv_properties.min_y, conv_properties.max_y] },
+      },
+      [0, 2, 5]
+    );
+
+    // Update all remaining traces
+    current_x_changed();
+  }
+
   // Add a listener to the slider
   slider.addEventListener("input", (event) => {
-    restyle(Number(event.target.value));
+    current_x = Number(event.target.value);
+    current_x_changed();
   });
+
+  function update_plf(event) {
+    try {
+      let new_plf = PLF.from_rtctoolbox_str(event.target.value);
+      if (event.target.id == "plf_a") {
+        plf_a = new_plf;
+      } else if (event.target.id == "plf_b") {
+        plf_b = new_plf;
+      }
+      redraw_plot();
+    } catch (error) {
+      // TODO
+      console.error("Input is not a valid PLF");
+    }
+  }
+
+  input_a.addEventListener("input", update_plf);
+  input_b.addEventListener("input", update_plf);
 
   console.log("main finished");
 }
