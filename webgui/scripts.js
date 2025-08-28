@@ -25,7 +25,7 @@ async function main() {
   const slider = document.querySelector("#slider");
   const input_a = document.querySelector("#plf_a");
   const input_b = document.querySelector("#plf_b");
-  const conv_type_select = document.querySelector("#conv_type_select");
+  const conv_type_container = document.querySelector("#conv_type_container");
 
   // load and initialize pyodide
   let pyodide = await loadPyodide();
@@ -44,15 +44,33 @@ async function main() {
   input_a.value = "[(0, 0, 0), (1, 1, 0), (2, 2, 0), (3, 3, 0)], 5";
   input_b.value = "[(0, 0, 0), (1, 0, 1)], 4";
 
-  // add options to the conv type select
-  for (let ctype of ConvType) {
-    conv_type_select.add(new Option(ctype.operator_desc, ctype.value));
-  }
-
   // create the PLFs to plot (static for now)
   let plf_a = PLF.from_rtctoolbox_str(input_a.value);
   let plf_b = PLF.from_rtctoolbox_str(input_b.value);
-  let conv_type = ConvType.MIN_PLUS_CONV;
+  let conv_type = ConvType(0);
+
+  // add radio buttons for selecting the conv type
+  for (let ctype of ConvType) {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+
+    input.type = "radio";
+    input.name = "conv_type";
+    input.value = ctype.value;
+    if (ctype.value == conv_type.value) {
+      input.checked = "True";
+    }
+
+    input.addEventListener("change", update_conv_type);
+
+    label.appendChild(input);
+    label.insertAdjacentHTML("beforeend", ctype.operator_desc);
+    conv_type_container.appendChild(label);
+  }
+
+  if (window.MathJax) {
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub, conv_type_container]);
+  }
 
   // compute the convolution
   let conv_properties = ConvProperties(plf_a, plf_b, conv_type);
@@ -277,8 +295,6 @@ async function main() {
   slider.addEventListener("input", update_current_x);
   input_a.addEventListener("input", update_plf);
   input_b.addEventListener("input", update_plf);
-  conv_type_select.addEventListener("change", update_conv_type);
-
 
   console.log("main finished");
 }
