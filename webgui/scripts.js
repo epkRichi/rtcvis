@@ -25,6 +25,7 @@ async function main() {
   const slider = document.querySelector("#slider");
   const input_a = document.querySelector("#plf_a");
   const input_b = document.querySelector("#plf_b");
+  const conv_type_select = document.querySelector("#conv_type_select");
 
   // load and initialize pyodide
   let pyodide = await loadPyodide();
@@ -42,6 +43,11 @@ async function main() {
   // put default values into the textfields
   input_a.value = "[(0, 0, 0), (1, 1, 0), (2, 2, 0), (3, 3, 0)], 5";
   input_b.value = "[(0, 0, 0), (1, 0, 1)], 4";
+
+  // add options to the conv type select
+  for (let ctype of ConvType) {
+    conv_type_select.add(new Option(ctype.operator_desc, ctype.value));
+  }
 
   // create the PLFs to plot (static for now)
   let plf_a = PLF.from_rtctoolbox_str(input_a.value);
@@ -242,11 +248,10 @@ async function main() {
     current_x_changed();
   }
 
-  // Add a listener to the slider
-  slider.addEventListener("input", (event) => {
+  function update_current_x(event) {
     current_x = Number(event.target.value);
     current_x_changed();
-  });
+  }
 
   function update_plf(event) {
     try {
@@ -263,8 +268,17 @@ async function main() {
     }
   }
 
+  function update_conv_type(event) {
+    conv_type = ConvType(Number(event.target.value));
+    redraw_plot();
+  }
+
+  // Add listener to input elements
+  slider.addEventListener("input", update_current_x);
   input_a.addEventListener("input", update_plf);
   input_b.addEventListener("input", update_plf);
+  conv_type_select.addEventListener("change", update_conv_type);
+
 
   console.log("main finished");
 }
