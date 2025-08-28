@@ -68,6 +68,7 @@ async function main() {
     conv_type_container.appendChild(label);
   }
 
+  // Render the LaTeX equations in the radio buttons
   if (window.MathJax) {
     MathJax.Hub.Queue(["Typeset", MathJax.Hub, conv_type_container]);
   }
@@ -266,11 +267,19 @@ async function main() {
     current_x_changed();
   }
 
+  /**
+   * Updates the current_x value and redraws the affected traces.
+   * @param {Event} event Event from a range type input.
+   */
   function update_current_x(event) {
     current_x = Number(event.target.value);
     current_x_changed();
   }
 
+  /**
+   * Updates the corresponding PLF and redraws the entire plot.
+   * @param {InputEvent} event Event from a text type input.
+   */
   function update_plf(event) {
     try {
       let new_plf = PLF.from_rtctoolbox_str(event.target.value);
@@ -286,6 +295,10 @@ async function main() {
     }
   }
 
+  /**
+   * Updates the conv_type value and redraws the entire plot.
+   * @param {Event} event Event from a radio type input.
+   */
   function update_conv_type(event) {
     conv_type = ConvType(Number(event.target.value));
     redraw_plot();
