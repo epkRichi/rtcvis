@@ -289,9 +289,9 @@ async function main() {
         plf_b = new_plf;
       }
       redraw_plot();
+      event.target.classList.remove("error");
     } catch (error) {
-      // TODO
-      console.error("Input is not a valid PLF");
+      event.target.classList.add("error");
     }
   }
 
