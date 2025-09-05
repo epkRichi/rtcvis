@@ -26,6 +26,7 @@ async function main() {
   const input_a = document.querySelector("#plf_a");
   const input_b = document.querySelector("#plf_b");
   const conv_type_container = document.querySelector("#conv_type_container");
+  const delta_span = document.querySelector("#delta-span");
 
   // load and initialize pyodide
   let pyodide = await loadPyodide();
@@ -51,21 +52,28 @@ async function main() {
 
   // add radio buttons for selecting the conv type
   for (let ctype of ConvType) {
-    const label = document.createElement("label");
-    const input = document.createElement("input");
+    const inputDiv = document.createElement("div");
+    inputDiv.classList.add("form-check");
+    inputDiv.classList.add("form-check-inline");
 
+    const input = document.createElement("input");
+    input.classList.add("form-check-input");
     input.type = "radio";
-    input.name = "conv_type";
+    input.name = "conv_type_radio";
+    input.id = "conv_type_radio_" + ctype.value;
     input.value = ctype.value;
-    if (ctype.value == conv_type.value) {
-      input.checked = "True";
-    }
+    input.checked = ctype.value == conv_type.value;
+
+    const label = document.createElement("label");
+    label.classList.add("form-check-label");
+    label.for = input.id;
+    label.innerHTML = String(ctype) + ": " + ctype.operator_desc;
+
+    inputDiv.appendChild(input);
+    inputDiv.appendChild(label);
+    conv_type_container.appendChild(inputDiv);
 
     input.addEventListener("change", update_conv_type);
-
-    label.appendChild(input);
-    label.insertAdjacentHTML("beforeend", ctype.operator_desc);
-    conv_type_container.appendChild(label);
   }
 
   // Render the LaTeX equations in the radio buttons
@@ -82,6 +90,10 @@ async function main() {
   slider.min = conv_properties.slider_min;
   slider.max = conv_properties.slider_max;
   slider.value = current_x;
+
+  // padding for the delta_span
+  const decimals = 2;
+  let padding = 0;
 
   // create the traces to plot
   let trace_a = {
@@ -170,7 +182,7 @@ async function main() {
   );
 
   /**
-   * Updates the plot to a new current_x value.
+   * Updates the plot and the delta_span to a new current_x value.
    */
   function current_x_changed() {
     conv_result = conv_at_x(plf_a, plf_b, current_x, conv_type);
@@ -213,6 +225,10 @@ async function main() {
       },
       [1, 3, 4, 6]
     );
+    delta_span.innerText = String(current_x.toFixed(decimals)).padStart(
+      padLength,
+      " "
+    );
   }
 
   /**
@@ -232,6 +248,12 @@ async function main() {
     slider.min = conv_properties.slider_min;
     slider.max = conv_properties.slider_max;
     slider.value = current_x;
+
+    // Compute padding for the delta_span
+    padLength = Math.max(
+      String(Number(slider.min).toFixed(decimals)).length,
+      String(Number(slider.max).toFixed(decimals)).length
+    );
 
     // Recompute all traces that aren't touched by current_x_changed
     trace_a = {
@@ -308,6 +330,10 @@ async function main() {
   slider.addEventListener("input", update_current_x);
   input_a.addEventListener("input", update_plf);
   input_b.addEventListener("input", update_plf);
+
+  // Redraw to display the correct value in the delta_span
+  // FIXME this is ugly
+  redraw_plot();
 
   console.log("main finished");
 }
