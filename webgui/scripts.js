@@ -152,6 +152,50 @@ async function main() {
     showlegend: false,
   };
 
+  /**
+   * Computes the ranges for the plot such that the given coordinates are visible.
+   * @param {Number} xmin Minimum x that must be visible.
+   * @param {Number} xmax Maximum x that must be visible.
+   * @param {Number} ymin Minimum y that must be visible.
+   * @param {Number} ymax Maximum y that must be visible.
+   * @returns An object with x and y properties that are the ranges for Plotly.
+   */
+  function computePlotRanges(xmin, xmax, ymin, ymax) {
+    const xrange = xmax - xmin;
+    const yrange = ymax - ymin;
+    const aspectRatio = plot.offsetWidth / plot.offsetHeight;
+    console.log(`aspect ratio: ${aspectRatio}`);
+
+    // Target for y if we keep the xrange
+    const targetY = xrange / aspectRatio;
+    // Target for x if we keep the yrange
+    const targetX = yrange * aspectRatio;
+
+    if (targetY > yrange) {
+      // Not enough vertical space -> pad in y direction
+      const pad = (targetY - yrange) / 2;
+      return {
+        x: [xmin, xmax],
+        y: [ymin - pad, ymax + pad],
+      };
+    } else {
+      // Not enough horizontal space -> pad in x direction
+      const pad = (targetX - xrange) / 2;
+      return {
+        x: [xmin - pad, xmax + pad],
+        y: [ymin, ymax],
+      };
+    }
+  }
+
+  // Compute the axis ranges
+  let plot_ranges = computePlotRanges(
+    conv_properties.min_x,
+    conv_properties.max_x,
+    conv_properties.min_y,
+    conv_properties.max_y
+  );
+
   // Create the plot
   Plotly.newPlot(
     plot,
@@ -166,8 +210,12 @@ async function main() {
     ],
     {
       margin: { t: 0 },
-      xaxis: { range: [conv_properties.min_x, conv_properties.max_x] },
-      yaxis: { range: [conv_properties.min_y, conv_properties.max_y] },
+      xaxis: { range: plot_ranges.x },
+      yaxis: {
+        range: plot_ranges.y,
+        scaleanchor: "x",
+        scaleratio: 1,
+      },
       legend: { x: 1, y: 0.5 },
       colorway: [
         "#1f77b4",
@@ -178,7 +226,8 @@ async function main() {
         "#9467bd",
         "#9467bd",
       ],
-    }
+    },
+    { responsive: true }
   );
 
   /**
@@ -249,6 +298,14 @@ async function main() {
     slider.max = conv_properties.slider_max;
     slider.value = current_x;
 
+    // Recompute the plot ranges
+    plot_ranges = computePlotRanges(
+      conv_properties.min_x,
+      conv_properties.max_x,
+      conv_properties.min_y,
+      conv_properties.max_y
+    );
+
     // Compute padding for the delta_span
     padLength = Math.max(
       String(Number(slider.min).toFixed(decimals)).length,
@@ -279,8 +336,8 @@ async function main() {
         y: [trace_a.y, trace_b.y, trace_result.y],
       },
       {
-        xaxis: { range: [conv_properties.min_x, conv_properties.max_x] },
-        yaxis: { range: [conv_properties.min_y, conv_properties.max_y] },
+        xaxis: { range: plot_ranges.x },
+        yaxis: { range: plot_ranges.y },
       },
       [0, 2, 5]
     );
