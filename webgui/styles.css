@@ -5,8 +5,8 @@
 }
 
 #content {
-  width: 90%;
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1400px;
 }
 
 #plot-wrapper {
@@ -51,4 +51,14 @@
 
 .error:not(:focus) {
   background-color: tomato;
+}
+
+#conv_type_outer_container {
+  display: flex;
+  justify-content: center;
+}
+
+#conv_type_container {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
 }
