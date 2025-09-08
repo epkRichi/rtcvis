@@ -10,6 +10,10 @@
       integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
       crossorigin="anonymous"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    />
     <script type="text/x-mathjax-config">
       MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
     </script>
@@ -22,6 +26,7 @@
       src="https://cdn.jsdelivr.net/pyodide/v0.28.2/full/pyodide.js"
       charset="utf-8"
     ></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   </head>
   <body>
     <div id="wrapper">
@@ -36,7 +41,10 @@
           <input type="text" id="plf_b" name="plf_b" />
         </div>
 
-        <div id="plot"></div>
+        <div id="plot-wrapper">
+          <div id="plot"></div>
+          <div id="legend"></div>
+        </div>
 
         <div id="conv_type_container"></div>
 

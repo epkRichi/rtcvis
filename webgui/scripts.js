@@ -27,6 +27,7 @@ async function main() {
   const input_b = document.querySelector("#plf_b");
   const conv_type_container = document.querySelector("#conv_type_container");
   const delta_span = document.querySelector("#delta-span");
+  const legend = document.querySelector("#legend");
 
   // load and initialize pyodide
   let pyodide = await loadPyodide();
@@ -100,7 +101,7 @@ async function main() {
     x: toJsSafe(plf_a.x),
     y: toJsSafe(plf_a.y),
     mode: "lines",
-    name: "$a(\\lambda)$",
+    name: conv_type.a_desc,
     visible: "legendonly",
   };
 
@@ -108,14 +109,14 @@ async function main() {
     x: toJsSafe(conv_result.transformed_a.x),
     y: toJsSafe(conv_result.transformed_a.y),
     mode: "lines",
-    name: "$a(\\Delta - \\lambda)$",
+    name: conv_type.a_trans_desc,
   };
 
   let trace_b = {
     x: toJsSafe(plf_b.x),
     y: toJsSafe(plf_b.y),
     mode: "lines",
-    name: "$b(\\lambda)$",
+    name: conv_type.b_desc,
   };
 
   let trace_sum = {
@@ -164,7 +165,6 @@ async function main() {
     const xrange = xmax - xmin;
     const yrange = ymax - ymin;
     const aspectRatio = plot.offsetWidth / plot.offsetHeight;
-    console.log(`aspect ratio: ${aspectRatio}`);
 
     // Target for y if we keep the xrange
     const targetY = xrange / aspectRatio;
@@ -216,6 +216,8 @@ async function main() {
         scaleanchor: "x",
         scaleratio: 1,
       },
+      // The Latex in the legend gets rerendered in every restyle, which is too slow and the legend is thus disabled
+      showlegend: false,
       legend: { x: 1, y: 0.5 },
       colorway: [
         "#1f77b4",
@@ -316,30 +318,67 @@ async function main() {
     trace_a = {
       x: toJsSafe(plf_a.x),
       y: toJsSafe(plf_a.y),
+      name: conv_type.a_desc,
+    };
+
+    trace_transformed_a = {
+      x: undefined,
+      y: undefined,
+      name: conv_type.a_trans_desc,
     };
 
     trace_b = {
       x: toJsSafe(plf_b.x),
       y: toJsSafe(plf_b.y),
+      name: conv_type.b_desc,
+    };
+
+    trace_sum = {
+      x: undefined,
+      y: undefined,
+      name: conv_type.sum_desc,
     };
 
     trace_result = {
       x: toJsSafe(conv_properties.result.x),
       y: toJsSafe(conv_properties.result.y),
+      name: conv_type.operator_desc,
     };
+
+    // build the legend
+    buildLegend();
 
     // Update the plot, inlcuding the axis limits
     Plotly.update(
       plot,
       {
-        x: [trace_a.x, trace_b.x, trace_result.x],
-        y: [trace_a.y, trace_b.y, trace_result.y],
+        x: [
+          trace_a.x,
+          trace_transformed_a.x,
+          trace_b.x,
+          trace_sum.x,
+          trace_result.x,
+        ],
+        y: [
+          trace_a.y,
+          trace_transformed_a.y,
+          trace_b.y,
+          trace_sum.y,
+          trace_result.y,
+        ],
+        name: [
+          trace_a.name,
+          trace_transformed_a.name,
+          trace_b.name,
+          trace_sum.name,
+          trace_result.name,
+        ],
       },
       {
         xaxis: { range: plot_ranges.x },
         yaxis: { range: plot_ranges.y },
       },
-      [0, 2, 5]
+      [0, 1, 2, 3, 5]
     );
 
     // Update all remaining traces
@@ -388,11 +427,77 @@ async function main() {
   input_a.addEventListener("input", update_plf);
   input_b.addEventListener("input", update_plf);
 
+  function buildLegend() {
+    legend.innerHTML = "";
+
+    // Collect information about all traces
+    let groups = {};
+    plot.data.forEach((trace, idx) => {
+      let key = trace.legendgroup !== undefined ? trace.legendgroup : idx;
+      let color = plot._fullData[idx].line?.color || plot._fullData[idx].marker?.color;
+      if (!groups[key]) {
+        groups[key] = {
+          name: trace.name,
+          color: color,
+          indices: [],
+        };
+      }
+      groups[key].indices.push(idx);
+    });
+
+    // Create the legend entries
+    for (const [group, info] of Object.entries(groups)) {
+      let item = document.createElement("div");
+      item.style.display = "flex";
+      item.style.alignItems = "center";
+      item.style.cursor = "pointer";
+      item.style.marginBottom = "4px";
+
+      let swatch = document.createElement("div");
+      swatch.style.width = "12px";
+      swatch.style.height = "12px";
+      swatch.style.background = info.color || "black";
+      swatch.style.marginRight = "6px";
+      swatch.style.border = "1px solid #333";
+      item.appendChild(swatch);
+
+      let label = document.createElement("span");
+      item.appendChild(label);
+
+      // Render LaTeX using KaTeX
+      try {
+        katex.render(info.name.replace(/\$/g, ""), label, {
+          throwOnError: false,
+        });
+      } catch (e) {
+        label.textContent = info.name;
+      }
+
+      function updateLabelColor() {
+        let hidden = plot.data[info.indices[0]].visible === "legendonly";
+        label.style.color = hidden ? "#888" : "#000";
+      }
+
+      updateLabelColor();
+
+      item.onclick = function () {
+        let vis = plot.data[info.indices[0]].visible;
+        let newVis = vis === true || vis === undefined ? "legendonly" : true;
+        Plotly.restyle(plot, { visible: newVis }, info.indices);
+        updateLabelColor();
+      };
+
+      legend.appendChild(item);
+    }
+    Plotly.Plots.resize(plot);
+  }
+
+  // Call once initially
+  // buildLegend();
+
   // Redraw to display the correct value in the delta_span
   // FIXME this is ugly
   redraw_plot();
-
-  console.log("main finished");
 }
 
 main();

@@ -9,9 +9,20 @@
   max-width: 1200px;
 }
 
-#plot {
+#plot-wrapper {
   width: 100%;
+  display: flex;
+}
+
+#plot {
+  flex-grow: 1;
   aspect-ratio: 16 / 9;
+}
+
+#legend {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .textfield-wrapper {
