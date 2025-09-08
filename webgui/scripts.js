@@ -19,6 +19,15 @@ function toJsSafe(proxy) {
   return convertedProxy;
 }
 
+/**
+ * Use katex to render text. Uses the throwOnError option and removes dollar signs.
+ * @param {String} text Text to be rendered.
+ * @param {Element} element DOM element to render into.
+ */
+function katexRender(text, element) {
+  katex.render(text.replace(/\$/g, ""), element, { throwOnError: false });
+}
+
 async function main() {
   // get references to the plot and slider DOM elements
   const plot = document.querySelector("#plot");
@@ -26,7 +35,8 @@ async function main() {
   const input_a = document.querySelector("#plf_a");
   const input_b = document.querySelector("#plf_b");
   const conv_type_container = document.querySelector("#conv_type_container");
-  const delta_span = document.querySelector("#delta-span");
+  const delta_sign = document.querySelector("#delta-sign");
+  const delta_value = document.querySelector("#delta-value");
   const legend = document.querySelector("#legend");
 
   // load and initialize pyodide
@@ -45,6 +55,9 @@ async function main() {
   // put default values into the textfields
   input_a.value = "[(0, 0, 0), (1, 1, 0), (2, 2, 0), (3, 3, 0)], 5";
   input_b.value = "[(0, 0, 0), (1, 0, 1)], 4";
+
+  // render the delta sign
+  katexRender("\\Delta", delta_sign);
 
   // create the PLFs to plot (static for now)
   let plf_a = PLF.from_rtctoolbox_str(input_a.value);
@@ -68,18 +81,14 @@ async function main() {
     const label = document.createElement("label");
     label.classList.add("form-check-label");
     label.for = input.id;
-    label.innerHTML = String(ctype) + ": " + ctype.operator_desc;
+    katexRender(ctype.operator_desc, label);
+    label.innerHTML = String(ctype) + ": " + label.innerHTML;
 
     inputDiv.appendChild(input);
     inputDiv.appendChild(label);
     conv_type_container.appendChild(inputDiv);
 
     input.addEventListener("change", update_conv_type);
-  }
-
-  // Render the LaTeX equations in the radio buttons
-  if (window.MathJax) {
-    MathJax.Hub.Queue(["Typeset", MathJax.Hub, conv_type_container]);
   }
 
   // compute the convolution
@@ -92,9 +101,8 @@ async function main() {
   slider.max = conv_properties.slider_max;
   slider.value = current_x;
 
-  // padding for the delta_span
+  // number of decimal places for the delta_value
   const decimals = 2;
-  let padding = 0;
 
   // create the traces to plot
   let trace_a = {
@@ -233,7 +241,7 @@ async function main() {
   );
 
   /**
-   * Updates the plot and the delta_span to a new current_x value.
+   * Updates the plot and the delta_value to a new current_x value.
    */
   function current_x_changed() {
     conv_result = conv_at_x(plf_a, plf_b, current_x, conv_type);
@@ -276,7 +284,7 @@ async function main() {
       },
       [1, 3, 4, 6]
     );
-    delta_span.innerText = String(current_x.toFixed(decimals)).padStart(
+    delta_value.innerText = String(current_x.toFixed(decimals)).padStart(
       padLength,
       " "
     );
@@ -308,7 +316,7 @@ async function main() {
       conv_properties.max_y
     );
 
-    // Compute padding for the delta_span
+    // Compute padding for the delta_value
     padLength = Math.max(
       String(Number(slider.min).toFixed(decimals)).length,
       String(Number(slider.max).toFixed(decimals)).length
@@ -434,7 +442,8 @@ async function main() {
     let groups = {};
     plot.data.forEach((trace, idx) => {
       let key = trace.legendgroup !== undefined ? trace.legendgroup : idx;
-      let color = plot._fullData[idx].line?.color || plot._fullData[idx].marker?.color;
+      let color =
+        plot._fullData[idx].line?.color || plot._fullData[idx].marker?.color;
       if (!groups[key]) {
         groups[key] = {
           name: trace.name,
@@ -465,13 +474,7 @@ async function main() {
       item.appendChild(label);
 
       // Render LaTeX using KaTeX
-      try {
-        katex.render(info.name.replace(/\$/g, ""), label, {
-          throwOnError: false,
-        });
-      } catch (e) {
-        label.textContent = info.name;
-      }
+      katexRender(info.name, label);
 
       function updateLabelColor() {
         let hidden = plot.data[info.indices[0]].visible === "legendonly";
@@ -492,10 +495,7 @@ async function main() {
     Plotly.Plots.resize(plot);
   }
 
-  // Call once initially
-  // buildLegend();
-
-  // Redraw to display the correct value in the delta_span
+  // Redraw to display the correct value in the delta_value
   // FIXME this is ugly
   redraw_plot();
 }

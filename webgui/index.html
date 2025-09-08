@@ -14,10 +14,6 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
     />
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
-    </script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     <script
       src="https://cdn.plot.ly/plotly-3.1.0.min.js"
       charset="utf-8"
@@ -50,7 +46,7 @@
 
         <div id="slider-container">
           <input id="slider" type="range" min="0" max="3" step="any" />
-          $ \Delta $ = <span id="delta-span"></span>
+          <span id="delta-sign"></span> = <span id="delta-value"></span>
         </div>
       </div>
     </div>
