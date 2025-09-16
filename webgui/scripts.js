@@ -44,7 +44,7 @@ async function main() {
   let pyodide = await loadPyodide();
   await pyodide.loadPackage("micropip");
   const micropip = pyodide.pyimport("micropip");
-  await micropip.install("../dist/rtcvis-0.2.0-py3-none-any.whl");
+  await micropip.install("dist/rtcvis-0.2.0-py3-none-any.whl");
   pyodide.runPython(
     "from rtcvis import PLF, conv_at_x, ConvType, ConvProperties"
   );

@@ -20,7 +20,7 @@ keywords = ["math", "visualization", "education"]
 
 [project.optional-dependencies]
 plot = ["matplotlib", "PyQt6"]
-dev = ["pytest", "pre-commit", "mypy", "black", "build"]
+dev = ["pytest", "pre-commit", "mypy", "black", "build", "flake8"]
 
 [project.urls]
 Repository = "https://github.com/epkRichi/rtcvis"

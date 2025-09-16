@@ -32,7 +32,15 @@ Note that Curves are allowed to have discontinuities
 
 ## Development
 
+To install the package for development, clone it first and then run
+
 ```shell
 pip install -e .\[dev,plot\]
 pre-commit install
+```
+
+To build the package, you can use the build script:
+
+```shell
+./build.sh
 ```
