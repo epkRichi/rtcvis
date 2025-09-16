@@ -38,6 +38,7 @@ async function main() {
   const delta_sign = document.querySelector("#delta-sign");
   const delta_value = document.querySelector("#delta-value");
   const legend = document.querySelector("#legend");
+  const title = document.querySelector("#title");
 
   // load and initialize pyodide
   let pyodide = await loadPyodide();
@@ -63,6 +64,10 @@ async function main() {
   let plf_a = PLF.from_rtctoolbox_str(input_a.value);
   let plf_b = PLF.from_rtctoolbox_str(input_b.value);
   let conv_type = ConvType(0);
+
+  // add the title
+  katexRender(`${conv_type.operator_desc} = ${conv_type.full_desc}`, title);
+  title.innerHTML = String(conv_type) + ": " + title.innerHTML;
 
   // add radio buttons for selecting the conv type
   for (let ctype of ConvType) {
@@ -307,6 +312,10 @@ async function main() {
     slider.min = conv_properties.slider_min;
     slider.max = conv_properties.slider_max;
     slider.value = current_x;
+
+    // Set new title
+    katexRender(`${conv_type.operator_desc} = ${conv_type.full_desc}`, title);
+    title.innerHTML = String(conv_type) + ": " + title.innerHTML;
 
     // Recompute the plot ranges
     plot_ranges = computePlotRanges(
