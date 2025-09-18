@@ -1,3 +1,41 @@
+// get references to the plot and slider DOM elements
+const plot = document.querySelector("#plot");
+const slider = document.querySelector("#slider");
+const inputA = document.querySelector("#plf-a");
+const inputB = document.querySelector("#plf-b");
+const convTypeContainer = document.querySelector("#conv-type-container");
+const deltaSign = document.querySelector("#delta-sign");
+const deltaValue = document.querySelector("#delta-value");
+const legend = document.querySelector("#legend");
+const title = document.querySelector("#title");
+
+// python function and classes
+let conv_at_x;
+let ConvType;
+let PLF;
+let ConvProperties;
+
+// initial values
+const initialPLFAStr = "[(0, 0, 0), (1, 1, 0), (2, 2, 0), (3, 3, 0)], 5";
+const initialPLFBStr = "[(0, 0, 0), (1, 0, 1)], 4";
+
+// number of decimal places for the delta_value
+const decimals = 2;
+
+// the indices to use for the plot traces
+const traceIndices = {
+  a: 0,
+  transformedA: 1,
+  b: 2,
+  sum: 3,
+  sumMarker: 4,
+  result: 5,
+  resultMarker: 6,
+};
+
+// the current state
+const state = {};
+
 /**
  * Converts the given proxy to a js object that is not linked to the original
  * python object anymore. Destroys all intermediary proxies and the given proxy
@@ -28,19 +66,45 @@ function katexRender(text, element) {
   katex.render(text.replace(/\$/g, ""), element, { throwOnError: false });
 }
 
-async function main() {
-  // get references to the plot and slider DOM elements
-  const plot = document.querySelector("#plot");
-  const slider = document.querySelector("#slider");
-  const input_a = document.querySelector("#plf_a");
-  const input_b = document.querySelector("#plf_b");
-  const conv_type_container = document.querySelector("#conv_type_container");
-  const delta_sign = document.querySelector("#delta-sign");
-  const delta_value = document.querySelector("#delta-value");
-  const legend = document.querySelector("#legend");
-  const title = document.querySelector("#title");
+/**
+ * Computes the ranges for the plot such that the given coordinates are visible.
+ * @param {Number} xmin Minimum x that must be visible.
+ * @param {Number} xmax Maximum x that must be visible.
+ * @param {Number} ymin Minimum y that must be visible.
+ * @param {Number} ymax Maximum y that must be visible.
+ * @returns An object with x and y properties that are the ranges for Plotly.
+ */
+function computePlotRanges(xmin, xmax, ymin, ymax) {
+  const xrange = xmax - xmin;
+  const yrange = ymax - ymin;
+  const aspectRatio = plot.offsetWidth / plot.offsetHeight;
 
-  // load and initialize pyodide
+  // Target for y if we keep the xrange
+  const targetY = xrange / aspectRatio;
+  // Target for x if we keep the yrange
+  const targetX = yrange * aspectRatio;
+
+  if (targetY > yrange) {
+    // Not enough vertical space -> pad in y direction
+    const pad = (targetY - yrange) / 2;
+    return {
+      x: [xmin, xmax],
+      y: [ymin - pad, ymax + pad],
+    };
+  } else {
+    // Not enough horizontal space -> pad in x direction
+    const pad = (targetX - xrange) / 2;
+    return {
+      x: [xmin - pad, xmax + pad],
+      y: [ymin, ymax],
+    };
+  }
+}
+
+/**
+ * Loads pyodide, installs the needed packages and assigns some names to JS variables.
+ */
+async function initializePyodide() {
   let pyodide = await loadPyodide();
   await pyodide.loadPackage("micropip");
   const micropip = pyodide.pyimport("micropip");
@@ -48,29 +112,36 @@ async function main() {
   pyodide.runPython(
     "from rtcvis import PLF, conv_at_x, ConvType, ConvProperties"
   );
-  let conv_at_x = pyodide.globals.get("conv_at_x");
-  let ConvType = pyodide.globals.get("ConvType");
-  let PLF = pyodide.globals.get("PLF");
-  let ConvProperties = pyodide.globals.get("ConvProperties");
+  conv_at_x = pyodide.globals.get("conv_at_x");
+  ConvType = pyodide.globals.get("ConvType");
+  PLF = pyodide.globals.get("PLF");
+  ConvProperties = pyodide.globals.get("ConvProperties");
+}
 
+/**
+ * Initializes some RTCVis values in the state.
+ */
+function initializeRTCVis() {
+  // load defaults
+  state.plfA = PLF.from_rtctoolbox_str(initialPLFAStr);
+  state.plfB = PLF.from_rtctoolbox_str(initialPLFBStr);
+  state.convType = ConvType(0);
+  state.currentX = 0;
+}
+
+/**
+ * Setup some elements in the DOM.
+ */
+function setupDOM() {
   // put default values into the textfields
-  input_a.value = "[(0, 0, 0), (1, 1, 0), (2, 2, 0), (3, 3, 0)], 5";
-  input_b.value = "[(0, 0, 0), (1, 0, 1)], 4";
+  inputA.value = initialPLFAStr;
+  inputB.value = initialPLFBStr;
 
   // render the delta sign
-  katexRender("\\Delta", delta_sign);
-
-  // create the PLFs to plot (static for now)
-  let plf_a = PLF.from_rtctoolbox_str(input_a.value);
-  let plf_b = PLF.from_rtctoolbox_str(input_b.value);
-  let conv_type = ConvType(0);
-
-  // add the title
-  katexRender(`${conv_type.operator_desc} = ${conv_type.full_desc}`, title);
-  title.innerHTML = String(conv_type) + ": " + title.innerHTML;
+  katexRender("\\Delta", deltaSign);
 
   // add radio buttons for selecting the conv type
-  for (let ctype of ConvType) {
+  for (let conv_type of ConvType) {
     const inputDiv = document.createElement("div");
     inputDiv.classList.add("form-check");
     inputDiv.classList.add("form-check-inline");
@@ -79,135 +150,67 @@ async function main() {
     input.classList.add("form-check-input");
     input.type = "radio";
     input.name = "conv_type_radio";
-    input.id = "conv_type_radio_" + ctype.value;
-    input.value = ctype.value;
-    input.checked = ctype.value == conv_type.value;
+    input.id = "conv_type_radio_" + conv_type.value;
+    input.value = conv_type.value;
+    input.checked = conv_type.value == state.convType.value;
 
     const label = document.createElement("label");
     label.classList.add("form-check-label");
     label.for = input.id;
-    katexRender(ctype.operator_desc, label);
-    label.innerHTML = String(ctype) + ": " + label.innerHTML;
+    katexRender(conv_type.operator_desc, label);
+    label.innerHTML = String(conv_type) + ": " + label.innerHTML;
 
     inputDiv.appendChild(input);
     inputDiv.appendChild(label);
-    conv_type_container.appendChild(inputDiv);
+    convTypeContainer.appendChild(inputDiv);
 
-    input.addEventListener("change", update_conv_type);
+    input.addEventListener("change", updateConvType);
   }
 
-  // compute the convolution
-  let conv_properties = ConvProperties(plf_a, plf_b, conv_type);
-  let current_x = conv_properties.slider_min;
-  let conv_result = conv_at_x(plf_a, plf_b, current_x, conv_type);
+  // Add listener to input elements
+  slider.addEventListener("input", updateCurrentX);
+  inputA.addEventListener("input", updatePLF);
+  inputB.addEventListener("input", updatePLF);
+}
 
-  // configure the slider
-  slider.min = conv_properties.slider_min;
-  slider.max = conv_properties.slider_max;
-  slider.value = current_x;
-
-  // number of decimal places for the delta_value
-  const decimals = 2;
-
+function setupPlot() {
   // create the traces to plot
   let trace_a = {
-    x: toJsSafe(plf_a.x),
-    y: toJsSafe(plf_a.y),
     mode: "lines",
-    name: conv_type.a_desc,
     visible: "legendonly",
   };
 
   let trace_transformed_a = {
-    x: toJsSafe(conv_result.transformed_a.x),
-    y: toJsSafe(conv_result.transformed_a.y),
     mode: "lines",
-    name: conv_type.a_trans_desc,
   };
 
   let trace_b = {
-    x: toJsSafe(plf_b.x),
-    y: toJsSafe(plf_b.y),
     mode: "lines",
-    name: conv_type.b_desc,
   };
 
   let trace_sum = {
-    x: toJsSafe(conv_result.sum.x),
-    y: toJsSafe(conv_result.sum.y),
     mode: "lines",
-    name: conv_type.sum_desc,
     legendgroup: "group_sum",
     showlegend: true,
   };
 
   let trace_sum_marker = {
-    x: [conv_result.result.x],
-    y: [conv_result.result.y],
     mode: "markers",
     legendgroup: "group_sum",
     showlegend: false,
   };
 
   let trace_result = {
-    x: toJsSafe(conv_properties.result.x),
-    y: toJsSafe(conv_properties.result.y),
     mode: "lines",
-    name: conv_type.operator_desc,
     legendgroup: "group_result",
     showlegend: true,
   };
 
   let trace_result_marker = {
-    x: [current_x],
-    y: [conv_properties.result(current_x)],
     mode: "markers",
     legendgroup: "group_result",
     showlegend: false,
   };
-
-  /**
-   * Computes the ranges for the plot such that the given coordinates are visible.
-   * @param {Number} xmin Minimum x that must be visible.
-   * @param {Number} xmax Maximum x that must be visible.
-   * @param {Number} ymin Minimum y that must be visible.
-   * @param {Number} ymax Maximum y that must be visible.
-   * @returns An object with x and y properties that are the ranges for Plotly.
-   */
-  function computePlotRanges(xmin, xmax, ymin, ymax) {
-    const xrange = xmax - xmin;
-    const yrange = ymax - ymin;
-    const aspectRatio = plot.offsetWidth / plot.offsetHeight;
-
-    // Target for y if we keep the xrange
-    const targetY = xrange / aspectRatio;
-    // Target for x if we keep the yrange
-    const targetX = yrange * aspectRatio;
-
-    if (targetY > yrange) {
-      // Not enough vertical space -> pad in y direction
-      const pad = (targetY - yrange) / 2;
-      return {
-        x: [xmin, xmax],
-        y: [ymin - pad, ymax + pad],
-      };
-    } else {
-      // Not enough horizontal space -> pad in x direction
-      const pad = (targetX - xrange) / 2;
-      return {
-        x: [xmin - pad, xmax + pad],
-        y: [ymin, ymax],
-      };
-    }
-  }
-
-  // Compute the axis ranges
-  let plot_ranges = computePlotRanges(
-    conv_properties.min_x,
-    conv_properties.max_x,
-    conv_properties.min_y,
-    conv_properties.max_y
-  );
 
   // Create the plot
   Plotly.newPlot(
@@ -223,9 +226,7 @@ async function main() {
     ],
     {
       margin: { t: 0 },
-      xaxis: { range: plot_ranges.x },
       yaxis: {
-        range: plot_ranges.y,
         scaleanchor: "x",
         scaleratio: 1,
       },
@@ -244,269 +245,260 @@ async function main() {
     },
     { responsive: true }
   );
+}
 
-  /**
-   * Updates the plot and the delta_value to a new current_x value.
-   */
-  function current_x_changed() {
-    conv_result = conv_at_x(plf_a, plf_b, current_x, conv_type);
+/**
+ * Updates the plot and the delta_value to a new current_x value.
+ */
+function currentXChanged() {
+  // compute the next conv_at_x_result
+  state.conv_at_x_result = conv_at_x(
+    state.plfA,
+    state.plfB,
+    state.currentX,
+    state.convType
+  );
 
-    trace_transformed_a = {
-      x: toJsSafe(conv_result.transformed_a.x),
-      y: toJsSafe(conv_result.transformed_a.y),
-    };
+  // update the plot
+  let x = [];
+  let y = [];
+  let updateIndices = [];
 
-    trace_sum = {
-      x: toJsSafe(conv_result.sum.x),
-      y: toJsSafe(conv_result.sum.y),
-    };
+  x.push(toJsSafe(state.conv_at_x_result.transformed_a.x));
+  y.push(toJsSafe(state.conv_at_x_result.transformed_a.y));
+  updateIndices.push(traceIndices.transformedA);
 
-    trace_sum_marker = {
-      x: [conv_result.result.x],
-      y: [conv_result.result.y],
-    };
+  x.push(toJsSafe(state.conv_at_x_result.sum.x));
+  y.push(toJsSafe(state.conv_at_x_result.sum.y));
+  updateIndices.push(traceIndices.sum);
 
-    trace_result_marker = {
-      x: [current_x],
-      y: [conv_properties.result(current_x)],
-    };
+  x.push([state.conv_at_x_result.result.x]);
+  y.push([state.conv_at_x_result.result.y]);
+  updateIndices.push(traceIndices.sumMarker);
 
-    Plotly.restyle(
-      plot,
-      {
-        x: [
-          trace_transformed_a.x,
-          trace_sum.x,
-          trace_sum_marker.x,
-          trace_result_marker.x,
-        ],
-        y: [
-          trace_transformed_a.y,
-          trace_sum.y,
-          trace_sum_marker.y,
-          trace_result_marker.y,
-        ],
-      },
-      [1, 3, 4, 6]
-    );
-    delta_value.innerText = String(current_x.toFixed(decimals)).padStart(
-      padLength,
-      " "
-    );
-  }
+  x.push([state.currentX]);
+  y.push([state.convProperties.result(state.currentX)]);
+  updateIndices.push(traceIndices.resultMarker);
 
-  /**
-   * Redraws the entire plot. Should be used when the PLFs or the convolution type
-   * change. Will also update the slider and and axis limits. Internally calls the
-   * current_x_changed function but also updates the other traces.
-   */
-  function redraw_plot() {
-    // Recompute the convolution
-    conv_properties = ConvProperties(plf_a, plf_b, conv_type);
-    current_x = Math.min(
-      conv_properties.slider_max,
-      Math.max(conv_properties.slider_min, current_x)
-    );
+  Plotly.restyle(
+    plot,
+    {
+      x: x,
+      y: y,
+    },
+    updateIndices
+  );
 
-    // Reset slider limits
-    slider.min = conv_properties.slider_min;
-    slider.max = conv_properties.slider_max;
-    slider.value = current_x;
+  // update the delta value
+  deltaValue.innerText = String(state.currentX.toFixed(decimals)).padStart(
+    state.padLength,
+    " "
+  );
+}
 
-    // Set new title
-    katexRender(`${conv_type.operator_desc} = ${conv_type.full_desc}`, title);
-    title.innerHTML = String(conv_type) + ": " + title.innerHTML;
+/**
+ * Redraws the entire plot. Should be used when the PLFs or the convolution type
+ * change. Will also update the slider and and axis limits. Internally calls the
+ * currentXChanged function but also updates the other traces.
+ */
+function redrawPlot() {
+  // Recompute the convolution
+  state.convProperties = ConvProperties(
+    state.plfA,
+    state.plfB,
+    state.convType
+  );
+  state.currentX = Math.min(
+    state.convProperties.slider_max,
+    Math.max(state.convProperties.slider_min, state.currentX)
+  );
 
-    // Recompute the plot ranges
-    plot_ranges = computePlotRanges(
-      conv_properties.min_x,
-      conv_properties.max_x,
-      conv_properties.min_y,
-      conv_properties.max_y
-    );
+  // Reset slider limits
+  slider.min = state.convProperties.slider_min;
+  slider.max = state.convProperties.slider_max;
+  slider.value = state.currentX;
 
-    // Compute padding for the delta_value
-    padLength = Math.max(
-      String(Number(slider.min).toFixed(decimals)).length,
-      String(Number(slider.max).toFixed(decimals)).length
-    );
+  // Set new title
+  katexRender(
+    `${state.convType.operator_desc} = ${state.convType.full_desc}`,
+    title
+  );
+  title.innerHTML = String(state.convType) + ": " + title.innerHTML;
 
-    // Recompute all traces that aren't touched by current_x_changed
-    trace_a = {
-      x: toJsSafe(plf_a.x),
-      y: toJsSafe(plf_a.y),
-      name: conv_type.a_desc,
-    };
+  // Compute padding for the delta_value
+  state.padLength = Math.max(
+    String(state.convProperties.slider_min.toFixed(decimals)).length,
+    String(state.convProperties.slider_max.toFixed(decimals)).length
+  );
 
-    trace_transformed_a = {
-      x: undefined,
-      y: undefined,
-      name: conv_type.a_trans_desc,
-    };
+  // Update the plot
+  state.plotRanges = computePlotRanges(
+    state.convProperties.min_x,
+    state.convProperties.max_x,
+    state.convProperties.min_y,
+    state.convProperties.max_y
+  );
 
-    trace_b = {
-      x: toJsSafe(plf_b.x),
-      y: toJsSafe(plf_b.y),
-      name: conv_type.b_desc,
-    };
+  let x = [];
+  let y = [];
+  let names = [];
+  let updateIndices = [];
 
-    trace_sum = {
-      x: undefined,
-      y: undefined,
-      name: conv_type.sum_desc,
-    };
+  x.push(toJsSafe(state.plfA.x));
+  y.push(toJsSafe(state.plfA.y));
+  names.push(state.convType.a_desc);
+  updateIndices.push(traceIndices.a);
 
-    trace_result = {
-      x: toJsSafe(conv_properties.result.x),
-      y: toJsSafe(conv_properties.result.y),
-      name: conv_type.operator_desc,
-    };
+  x.push(undefined);
+  y.push(undefined);
+  names.push(state.convType.a_trans_desc);
+  updateIndices.push(traceIndices.transformedA);
 
-    // build the legend
-    buildLegend();
+  x.push(toJsSafe(state.plfB.x));
+  y.push(toJsSafe(state.plfB.y));
+  names.push(state.convType.b_desc);
+  updateIndices.push(traceIndices.b);
 
-    // Update the plot, inlcuding the axis limits
-    Plotly.update(
-      plot,
-      {
-        x: [
-          trace_a.x,
-          trace_transformed_a.x,
-          trace_b.x,
-          trace_sum.x,
-          trace_result.x,
-        ],
-        y: [
-          trace_a.y,
-          trace_transformed_a.y,
-          trace_b.y,
-          trace_sum.y,
-          trace_result.y,
-        ],
-        name: [
-          trace_a.name,
-          trace_transformed_a.name,
-          trace_b.name,
-          trace_sum.name,
-          trace_result.name,
-        ],
-      },
-      {
-        xaxis: { range: plot_ranges.x },
-        yaxis: { range: plot_ranges.y },
-      },
-      [0, 1, 2, 3, 5]
-    );
+  x.push(undefined);
+  y.push(undefined);
+  names.push(state.convType.sum_desc);
+  updateIndices.push(traceIndices.sum);
 
-    // Update all remaining traces
-    current_x_changed();
-  }
+  x.push(toJsSafe(state.convProperties.result.x));
+  y.push(toJsSafe(state.convProperties.result.y));
+  names.push(state.convType.operator_desc);
+  updateIndices.push(traceIndices.result);
 
-  /**
-   * Updates the current_x value and redraws the affected traces.
-   * @param {Event} event Event from a range type input.
-   */
-  function update_current_x(event) {
-    current_x = Number(event.target.value);
-    current_x_changed();
-  }
+  Plotly.update(
+    plot,
+    {
+      x: x,
+      y: y,
+      name: names,
+    },
+    {
+      xaxis: { range: state.plotRanges.x },
+      yaxis: { range: state.plotRanges.y },
+    },
+    updateIndices
+  );
 
-  /**
-   * Updates the corresponding PLF and redraws the entire plot.
-   * @param {InputEvent} event Event from a text type input.
-   */
-  function update_plf(event) {
-    try {
-      let new_plf = PLF.from_rtctoolbox_str(event.target.value);
-      if (event.target.id == "plf_a") {
-        plf_a = new_plf;
-      } else if (event.target.id == "plf_b") {
-        plf_b = new_plf;
-      }
-      redraw_plot();
-      event.target.classList.remove("error");
-    } catch (error) {
-      event.target.classList.add("error");
-    }
-  }
+  // Update all remaining traces of the plot
+  currentXChanged();
 
-  /**
-   * Updates the conv_type value and redraws the entire plot.
-   * @param {Event} event Event from a radio type input.
-   */
-  function update_conv_type(event) {
-    conv_type = ConvType(Number(event.target.value));
-    redraw_plot();
-  }
+  // build the legend (some names may have changed)
+  buildLegend();
+}
 
-  // Add listener to input elements
-  slider.addEventListener("input", update_current_x);
-  input_a.addEventListener("input", update_plf);
-  input_b.addEventListener("input", update_plf);
+/**
+ * Build a custom legend.
+ *
+ * The PlotlyJS legend gets rerendered every time the plot gets updated,
+ * which is very slow when using LaTeX names. We thus build our own
+ * legend that also allows toggling the visibility of individual traces.
+ */
+function buildLegend() {
+  legend.innerHTML = "";
 
-  function buildLegend() {
-    legend.innerHTML = "";
-
-    // Collect information about all traces
-    let groups = {};
-    plot.data.forEach((trace, idx) => {
-      let key = trace.legendgroup !== undefined ? trace.legendgroup : idx;
-      let color =
-        plot._fullData[idx].line?.color || plot._fullData[idx].marker?.color;
-      if (!groups[key]) {
-        groups[key] = {
-          name: trace.name,
-          color: color,
-          indices: [],
-        };
-      }
-      groups[key].indices.push(idx);
-    });
-
-    // Create the legend entries
-    for (const [group, info] of Object.entries(groups)) {
-      let item = document.createElement("div");
-      item.style.display = "flex";
-      item.style.alignItems = "center";
-      item.style.cursor = "pointer";
-      item.style.marginBottom = "4px";
-
-      let swatch = document.createElement("div");
-      swatch.style.width = "12px";
-      swatch.style.height = "12px";
-      swatch.style.background = info.color || "black";
-      swatch.style.marginRight = "6px";
-      swatch.style.border = "1px solid #333";
-      item.appendChild(swatch);
-
-      let label = document.createElement("span");
-      item.appendChild(label);
-
-      // Render LaTeX using KaTeX
-      katexRender(info.name, label);
-
-      function updateLabelColor() {
-        let hidden = plot.data[info.indices[0]].visible === "legendonly";
-        label.style.color = hidden ? "#888" : "#000";
-      }
-
-      updateLabelColor();
-
-      item.onclick = function () {
-        let vis = plot.data[info.indices[0]].visible;
-        let newVis = vis === true || vis === undefined ? "legendonly" : true;
-        Plotly.restyle(plot, { visible: newVis }, info.indices);
-        updateLabelColor();
+  // Collect information about all traces
+  let groups = {};
+  plot.data.forEach((trace, idx) => {
+    let key = trace.legendgroup !== undefined ? trace.legendgroup : idx;
+    let color =
+      plot._fullData[idx].line?.color || plot._fullData[idx].marker?.color;
+    if (!groups[key]) {
+      groups[key] = {
+        name: trace.name,
+        color: color,
+        indices: [],
       };
-
-      legend.appendChild(item);
     }
-    Plotly.Plots.resize(plot);
-  }
+    groups[key].indices.push(idx);
+  });
 
-  // Redraw to display the correct value in the delta_value
-  // FIXME this is ugly
-  redraw_plot();
+  // Create the legend entries
+  for (const [group, info] of Object.entries(groups)) {
+    let item = document.createElement("div");
+    item.style.display = "flex";
+    item.style.alignItems = "center";
+    item.style.cursor = "pointer";
+    item.style.marginBottom = "4px";
+
+    let swatch = document.createElement("div");
+    swatch.style.width = "12px";
+    swatch.style.height = "12px";
+    swatch.style.background = info.color || "black";
+    swatch.style.marginRight = "6px";
+    swatch.style.border = "1px solid #333";
+    item.appendChild(swatch);
+
+    let label = document.createElement("span");
+    item.appendChild(label);
+
+    katexRender(info.name, label);
+
+    function updateLabelColor() {
+      let hidden = plot.data[info.indices[0]].visible === "legendonly";
+      label.style.color = hidden ? "#888" : "#000";
+    }
+
+    updateLabelColor();
+
+    item.onclick = function () {
+      let vis = plot.data[info.indices[0]].visible;
+      let newVis = vis === true || vis === undefined ? "legendonly" : true;
+      Plotly.restyle(plot, { visible: newVis }, info.indices);
+      updateLabelColor();
+    };
+
+    legend.appendChild(item);
+  }
+  Plotly.Plots.resize(plot);
+}
+
+/**
+ * Updates the current_x value and redraws the affected traces.
+ * @param {Event} event Event from a range type input.
+ */
+function updateCurrentX(event) {
+  state.currentX = Number(event.target.value);
+  currentXChanged();
+}
+
+/**
+ * Updates the corresponding PLF and redraws the entire plot.
+ * @param {InputEvent} event Event from a text type input.
+ */
+function updatePLF(event) {
+  try {
+    let newPLF = PLF.from_rtctoolbox_str(event.target.value);
+    if (event.target.id == "plf_a") {
+      state.plfA = newPLF;
+    } else if (event.target.id == "plf_b") {
+      state.plfB = newPLF;
+    }
+    redrawPlot();
+    event.target.classList.remove("error");
+  } catch (error) {
+    event.target.classList.add("error");
+  }
+}
+
+/**
+ * Updates the conv_type value and redraws the entire plot.
+ * @param {Event} event Event from a radio type input.
+ */
+function updateConvType(event) {
+  state.convType = ConvType(Number(event.target.value));
+  redrawPlot();
+}
+
+async function main() {
+  await initializePyodide();
+  initializeRTCVis();
+  setupDOM();
+  setupPlot();
+  redrawPlot();
 }
 
 main();

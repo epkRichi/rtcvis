@@ -53,12 +53,12 @@
   background-color: tomato;
 }
 
-#conv_type_outer_container {
+#conv-type-outer-container {
   display: flex;
   justify-content: center;
 }
 
-#conv_type_container {
+#conv-type-container {
   display: grid;
   grid-template-columns: repeat(2, auto);
 }
