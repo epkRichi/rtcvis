@@ -8,6 +8,7 @@ const deltaSign = document.querySelector("#delta-sign");
 const deltaValue = document.querySelector("#delta-value");
 const legend = document.querySelector("#legend");
 const title = document.querySelector("#title");
+const exportButton = document.querySelector("#export-button");
 
 // python function and classes
 let conv_at_x;
@@ -159,6 +160,7 @@ function setupDOM() {
   slider.addEventListener("input", updateCurrentX);
   inputA.addEventListener("input", updatePLF);
   inputB.addEventListener("input", updatePLF);
+  exportButton.addEventListener("click", exportConfiguration);
 }
 
 function setupPlot() {
@@ -291,11 +293,7 @@ function currentXChanged() {
  */
 function redrawPlot() {
   // Recompute the convolution
-  state.convProperties = ConvProperties(
-    state.plfA,
-    state.plfB,
-    state.convType
-  );
+  state.convProperties = ConvProperties(state.plfA, state.plfB, state.convType);
   state.currentX = Math.min(
     state.convProperties.slider_max,
     Math.max(state.convProperties.slider_min, state.currentX)
@@ -471,6 +469,21 @@ function updatePLF(event) {
   } catch (error) {
     target.classList.add("error");
   }
+}
+
+function exportConfiguration() {
+  const settings = {
+    plf_a: encodeURIComponent(inputA.value),
+    plf_b: encodeURIComponent(inputB.value),
+    convType: state.convType.value,
+    currentX: state.currentX,
+  };
+  const url = new URL(location);
+  for (const [key, value] of Object.entries(settings)) {
+    url.searchParams.set(key, value);
+  }
+  console.log(url);
+  window.history.pushState({}, "", url)
 }
 
 /**
