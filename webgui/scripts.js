@@ -142,29 +142,17 @@ function setupDOM() {
 
   // add radio buttons for selecting the conv type
   for (let conv_type of ConvType) {
-    const inputDiv = document.createElement("div");
-    inputDiv.classList.add("form-check");
-    inputDiv.classList.add("form-check-inline");
+    const button = document.createElement("button");
+    button.value = conv_type.value;
+    button.type = "button";
+    button.classList.add("conv-type-button");
+    katexRender(conv_type.operator_desc, button);
+    button.innerHTML = String(conv_type) + ": " + button.innerHTML;
 
-    const input = document.createElement("input");
-    input.classList.add("form-check-input");
-    input.type = "radio";
-    input.name = "conv_type_radio";
-    input.id = "conv_type_radio_" + conv_type.value;
-    input.value = conv_type.value;
-    input.checked = conv_type.value == state.convType.value;
+    convTypeContainer.appendChild(button);
 
-    const label = document.createElement("label");
-    label.classList.add("form-check-label");
-    label.for = input.id;
-    katexRender(conv_type.operator_desc, label);
-    label.innerHTML = String(conv_type) + ": " + label.innerHTML;
-
-    inputDiv.appendChild(input);
-    inputDiv.appendChild(label);
-    convTypeContainer.appendChild(inputDiv);
-
-    input.addEventListener("change", updateConvType);
+    // input.addEventListener("change", updateConvType);
+    button.addEventListener("click", updateConvType);
   }
 
   // Add listener to input elements
@@ -461,7 +449,7 @@ function buildLegend() {
  * @param {Event} event Event from a range type input.
  */
 function updateCurrentX(event) {
-  state.currentX = Number(event.target.value);
+  state.currentX = Number(event.currentTarget.value);
   currentXChanged();
 }
 
@@ -470,17 +458,18 @@ function updateCurrentX(event) {
  * @param {InputEvent} event Event from a text type input.
  */
 function updatePLF(event) {
+  const target = event.currentTarget;
   try {
-    let newPLF = PLF.from_rtctoolbox_str(event.target.value);
-    if (event.target.id == "plf_a") {
+    let newPLF = PLF.from_rtctoolbox_str(target.value);
+    if (target.id == "plf-a") {
       state.plfA = newPLF;
-    } else if (event.target.id == "plf_b") {
+    } else if (target.id == "plf-b") {
       state.plfB = newPLF;
     }
     redrawPlot();
-    event.target.classList.remove("error");
+    target.classList.remove("error");
   } catch (error) {
-    event.target.classList.add("error");
+    target.classList.add("error");
   }
 }
 
@@ -489,7 +478,7 @@ function updatePLF(event) {
  * @param {Event} event Event from a radio type input.
  */
 function updateConvType(event) {
-  state.convType = ConvType(Number(event.target.value));
+  state.convType = ConvType(Number(event.currentTarget.value));
   redrawPlot();
 }
 

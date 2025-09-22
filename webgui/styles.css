@@ -61,6 +61,13 @@
 #conv-type-container {
   display: grid;
   grid-template-columns: repeat(2, auto);
+  gap: 0.25em;
+}
+
+.conv-type-button {
+  background-color: #fff;
+  border: 2px solid gray;
+  border-radius: 5px;
 }
 
 #title {
