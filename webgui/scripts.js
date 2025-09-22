@@ -141,13 +141,13 @@ function setupDOM() {
   katexRender("\\Delta", deltaSign);
 
   // add radio buttons for selecting the conv type
-  for (let conv_type of ConvType) {
+  for (let convType of ConvType) {
     const button = document.createElement("button");
-    button.value = conv_type.value;
+    button.value = convType.value;
     button.type = "button";
     button.classList.add("conv-type-button");
-    katexRender(conv_type.operator_desc, button);
-    button.innerHTML = String(conv_type) + ": " + button.innerHTML;
+    katexRender(convType.operator_desc, button);
+    button.innerHTML = String(convType) + ": " + button.innerHTML;
 
     convTypeContainer.appendChild(button);
 
@@ -163,38 +163,38 @@ function setupDOM() {
 
 function setupPlot() {
   // create the traces to plot
-  let trace_a = {
+  let traceA = {
     mode: "lines",
     visible: "legendonly",
   };
 
-  let trace_transformed_a = {
+  let traceTransformedA = {
     mode: "lines",
   };
 
-  let trace_b = {
+  let traceB = {
     mode: "lines",
   };
 
-  let trace_sum = {
+  let traceSum = {
     mode: "lines",
     legendgroup: "group_sum",
     showlegend: true,
   };
 
-  let trace_sum_marker = {
+  let traceSumMarker = {
     mode: "markers",
     legendgroup: "group_sum",
     showlegend: false,
   };
 
-  let trace_result = {
+  let traceResult = {
     mode: "lines",
     legendgroup: "group_result",
     showlegend: true,
   };
 
-  let trace_result_marker = {
+  let traceResultMarker = {
     mode: "markers",
     legendgroup: "group_result",
     showlegend: false,
@@ -204,13 +204,13 @@ function setupPlot() {
   Plotly.newPlot(
     plot,
     [
-      trace_a,
-      trace_transformed_a,
-      trace_b,
-      trace_sum,
-      trace_sum_marker,
-      trace_result,
-      trace_result_marker,
+      traceA,
+      traceTransformedA,
+      traceB,
+      traceSum,
+      traceSumMarker,
+      traceResult,
+      traceResultMarker,
     ],
     {
       margin: { t: 0 },
@@ -239,8 +239,8 @@ function setupPlot() {
  * Updates the plot and the delta_value to a new current_x value.
  */
 function currentXChanged() {
-  // compute the next conv_at_x_result
-  state.conv_at_x_result = conv_at_x(
+  // compute the next convAtXResult
+  state.convAtXResult = conv_at_x(
     state.plfA,
     state.plfB,
     state.currentX,
@@ -252,16 +252,16 @@ function currentXChanged() {
   let y = [];
   let updateIndices = [];
 
-  x.push(toJsSafe(state.conv_at_x_result.transformed_a.x));
-  y.push(toJsSafe(state.conv_at_x_result.transformed_a.y));
+  x.push(toJsSafe(state.convAtXResult.transformed_a.x));
+  y.push(toJsSafe(state.convAtXResult.transformed_a.y));
   updateIndices.push(traceIndices.transformedA);
 
-  x.push(toJsSafe(state.conv_at_x_result.sum.x));
-  y.push(toJsSafe(state.conv_at_x_result.sum.y));
+  x.push(toJsSafe(state.convAtXResult.sum.x));
+  y.push(toJsSafe(state.convAtXResult.sum.y));
   updateIndices.push(traceIndices.sum);
 
-  x.push([state.conv_at_x_result.result.x]);
-  y.push([state.conv_at_x_result.result.y]);
+  x.push([state.convAtXResult.result.x]);
+  y.push([state.convAtXResult.result.y]);
   updateIndices.push(traceIndices.sumMarker);
 
   x.push([state.currentX]);
@@ -445,7 +445,7 @@ function buildLegend() {
 }
 
 /**
- * Updates the current_x value and redraws the affected traces.
+ * Updates the currentX value and redraws the affected traces.
  * @param {Event} event Event from a range type input.
  */
 function updateCurrentX(event) {
@@ -474,7 +474,7 @@ function updatePLF(event) {
 }
 
 /**
- * Updates the conv_type value and redraws the entire plot.
+ * Updates the convType value and redraws the entire plot.
  * @param {Event} event Event from a radio type input.
  */
 function updateConvType(event) {
