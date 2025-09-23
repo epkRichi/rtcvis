@@ -166,7 +166,9 @@ function initializeRTCVis() {
   initialPLFBStr = getParameter("plfB", initialPLFBStr);
   state.plfA = PLF.from_rtctoolbox_str(initialPLFAStr);
   state.plfB = PLF.from_rtctoolbox_str(initialPLFBStr);
-  state.convType = getParameter("convType", ConvType(0), (x) => ConvType(Number(x)));
+  state.convType = getParameter("convType", ConvType(0), (x) =>
+    ConvType(Number(x))
+  );
   state.currentX = getParameter("currentX", 0, Number);
 }
 
@@ -207,7 +209,6 @@ function setupPlot() {
   // create the traces to plot
   let traceA = {
     mode: "lines",
-    visible: "legendonly",
   };
 
   let traceTransformedA = {
@@ -242,18 +243,26 @@ function setupPlot() {
     showlegend: false,
   };
 
+  let traces = [
+    traceA,
+    traceTransformedA,
+    traceB,
+    traceSum,
+    traceSumMarker,
+    traceResult,
+    traceResultMarker,
+  ];
+
+  // Set the correct visibilities
+  const visibilities = getParameter("visibilities", "0111111");
+  for (const [i, trace] of traces.entries()) {
+    trace.visible =  visibilities.charAt(i) == "1" ? true : "legendonly";
+  }
+
   // Create the plot
   Plotly.newPlot(
     plot,
-    [
-      traceA,
-      traceTransformedA,
-      traceB,
-      traceSum,
-      traceSumMarker,
-      traceResult,
-      traceResultMarker,
-    ],
+    traces,
     {
       margin: { t: 0 },
       yaxis: {
@@ -520,12 +529,17 @@ function exportConfiguration() {
     plfB: inputB.value,
     convType: state.convType.value,
     currentX: state.currentX,
+    visibilities: "",
   };
+  for (const trace of plot.data) {
+    const isVisible = trace.visible === true || trace.visible === undefined;
+    settings.visibilities += isVisible ? "1" : "0";
+  }
+
   const url = new URL(location);
   for (const [key, value] of Object.entries(settings)) {
     url.searchParams.set(key, encodeURIComponent(value));
   }
-  console.log(url);
   window.history.pushState({}, "", url);
 }
 
