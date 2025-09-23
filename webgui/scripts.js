@@ -541,6 +541,7 @@ function exportConfiguration() {
     url.searchParams.set(key, encodeURIComponent(value));
   }
   window.history.pushState({}, "", url);
+  navigator.clipboard.writeText(url.href);
 }
 
 /**
