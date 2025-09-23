@@ -27,7 +27,6 @@
   <body>
     <div id="wrapper">
       <div id="content">
-        <button id="export-button">Export</button>
         <div class="textfield-wrapper">
           <label for="plf-a">a:</label>
           <input type="text" id="plf-a" name="plf-a" />
@@ -47,8 +46,26 @@
           <div id="legend"></div>
         </div>
 
-        <div id="conv-type-outer-container">
-          <div id="conv-type-container"></div>
+        <div id="buttons-container">
+          <div id="conv-type-outer-container">
+            <div id="conv-type-container"></div>
+          </div>
+          <div id="other-buttons">
+            <button
+              id="export-button"
+              class="btn btn-sm btn-outline-dark"
+              type="button"
+            >
+              Export
+            </button>
+            <a
+              class="btn btn-sm btn-outline-dark"
+              href="https://github.com/epkRichi/rtcvis"
+              role="button"
+              target="_blank"
+              >GitHub</a
+            >
+          </div>
         </div>
 
         <div id="slider-container">

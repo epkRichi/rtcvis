@@ -188,7 +188,9 @@ function setupDOM() {
     const button = document.createElement("button");
     button.value = convType.value;
     button.type = "button";
-    button.classList.add("conv-type-button");
+    button.classList.add("btn");
+    button.classList.add("btn-sm");
+    button.classList.add("btn-outline-dark")
     katexRender(convType.operator_desc, button);
     button.innerHTML = String(convType) + ": " + button.innerHTML;
 
