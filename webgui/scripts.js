@@ -17,8 +17,8 @@ let PLF;
 let ConvProperties;
 
 // initial values
-const initialPLFAStr = "[(0, 0, 0), (1, 1, 0), (2, 2, 0), (3, 3, 0)], 5";
-const initialPLFBStr = "[(0, 0, 0), (1, 0, 1)], 4";
+let initialPLFAStr = "[(0, 0, 0), (1, 1, 0), (2, 2, 0), (3, 3, 0)], 5";
+let initialPLFBStr = "[(0, 0, 0), (1, 0, 1)], 4";
 
 // number of decimal places for the delta_value
 const decimals = 2;
@@ -103,6 +103,44 @@ function computePlotRanges(xmin, xmax, ymin, ymax) {
 }
 
 /**
+ * Looks for a parameter in the URL. If the parameter exists,
+ * a function will be applied to it to convert it to the desired type.
+ * If the parameter doesn't exist, could not be decoded or applying the
+ * function resulted in an error, the default value will be returned.
+ *
+ * @param {String} name Name of the Parameter.
+ * @param {any} defaultValue Default value.
+ * @param {Function} fn Function to be applied to the parameter. Defaults to identity.
+ * @returns The converted parameter or the default value.
+ */
+function getParameter(name, defaultValue, fn = (x) => x) {
+  const url = new URL(location);
+  const value = url.searchParams.get(name);
+  if (value !== null) {
+    try {
+      const decodedValue = decodeURIComponent(value);
+      try {
+        return fn(decodedValue);
+      } catch (e) {
+        console.warn(
+          `parameter ${name} exists and was decoded to '${decodedValue},` +
+            ` but loading it resulted in an error. Reverting to default value '${defaultValue}`
+        );
+        return defaultValue;
+      }
+    } catch (e) {
+      console.warn(
+        `parameter ${name} exists and is set to '${value}' but could not be decoded.` +
+          ` Reverting to default value '${defaultValue}'`
+      );
+      return defaultValue;
+    }
+  } else {
+    return defaultValue;
+  }
+}
+
+/**
  * Loads pyodide, installs the needed packages and assigns some names to JS variables.
  */
 async function initializePyodide() {
@@ -124,10 +162,12 @@ async function initializePyodide() {
  */
 function initializeRTCVis() {
   // load defaults
+  initialPLFAStr = getParameter("plfA", initialPLFAStr);
+  initialPLFBStr = getParameter("plfB", initialPLFBStr);
   state.plfA = PLF.from_rtctoolbox_str(initialPLFAStr);
   state.plfB = PLF.from_rtctoolbox_str(initialPLFBStr);
-  state.convType = ConvType(0);
-  state.currentX = 0;
+  state.convType = getParameter("convType", ConvType(0), (x) => ConvType(Number(x)));
+  state.currentX = getParameter("currentX", 0, Number);
 }
 
 /**
@@ -471,19 +511,22 @@ function updatePLF(event) {
   }
 }
 
+/**
+ * Encodes all important settings the user made and adds them as encoded parameters to the URL.
+ */
 function exportConfiguration() {
   const settings = {
-    plf_a: encodeURIComponent(inputA.value),
-    plf_b: encodeURIComponent(inputB.value),
+    plfA: inputA.value,
+    plfB: inputB.value,
     convType: state.convType.value,
     currentX: state.currentX,
   };
   const url = new URL(location);
   for (const [key, value] of Object.entries(settings)) {
-    url.searchParams.set(key, value);
+    url.searchParams.set(key, encodeURIComponent(value));
   }
   console.log(url);
-  window.history.pushState({}, "", url)
+  window.history.pushState({}, "", url);
 }
 
 /**
