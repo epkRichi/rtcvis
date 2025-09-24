@@ -442,7 +442,7 @@ function buildLegend() {
   plot.data.forEach((trace, idx) => {
     let key = trace.legendgroup !== undefined ? trace.legendgroup : idx;
     let color =
-      plot._fullData[idx].line?.color || plot._fullData[idx].marker?.color;
+      plot._fullData[idx].line?.color || plot._fullData[idx].marker?.color || "black";
     if (!groups[key]) {
       groups[key] = {
         name: trace.name,
@@ -464,7 +464,7 @@ function buildLegend() {
     let swatch = document.createElement("div");
     swatch.style.width = "12px";
     swatch.style.height = "12px";
-    swatch.style.background = info.color || "black";
+    swatch.style.background = info.color;
     swatch.style.marginRight = "6px";
     swatch.style.border = "1px solid #333";
     item.appendChild(swatch);
@@ -477,6 +477,7 @@ function buildLegend() {
     function updateLabelColor() {
       let hidden = plot.data[info.indices[0]].visible === "legendonly";
       label.style.color = hidden ? "#888" : "#000";
+      swatch.style.background = hidden ? "#888" : info.color;
     }
 
     updateLabelColor();
