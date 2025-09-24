@@ -238,7 +238,8 @@ function setupPlot() {
     plot,
     traces,
     {
-      // margin: { t: "1em", b: "1em", l: "1em", r: "1em" },
+      // set "low" margins and how that everything shows up...
+      margin: { t: 40, b: 40, l: 40, r: 40 },
       yaxis: {
         scaleanchor: "x",
         scaleratio: 1,
