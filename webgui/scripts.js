@@ -190,7 +190,7 @@ function setupDOM() {
     button.type = "button";
     button.classList.add("btn");
     button.classList.add("btn-sm");
-    button.classList.add("btn-outline-dark")
+    button.classList.add("btn-outline-dark");
     katexRender(convType.operator_desc, button);
     button.innerHTML = String(convType) + ": " + button.innerHTML;
 
@@ -211,38 +211,45 @@ function setupPlot() {
   // create the traces to plot
   let traceA = {
     mode: "lines",
+    hoverinfo: "x+y",
   };
 
   let traceTransformedA = {
     mode: "lines",
+    hoverinfo: "x+y",
   };
 
   let traceB = {
     mode: "lines",
+    hoverinfo: "x+y",
   };
 
   let traceSum = {
     mode: "lines",
     legendgroup: "group_sum",
     showlegend: true,
+    hoverinfo: "x+y",
   };
 
   let traceSumMarker = {
     mode: "markers",
     legendgroup: "group_sum",
     showlegend: false,
+    hoverinfo: "x+y",
   };
 
   let traceResult = {
     mode: "lines",
     legendgroup: "group_result",
     showlegend: true,
+    hoverinfo: "x+y",
   };
 
   let traceResultMarker = {
     mode: "markers",
     legendgroup: "group_result",
     showlegend: false,
+    hoverinfo: "x+y",
   };
 
   let traces = [
@@ -258,7 +265,7 @@ function setupPlot() {
   // Set the correct visibilities
   const visibilities = getParameter("visibilities", "0111111");
   for (const [i, trace] of traces.entries()) {
-    trace.visible =  visibilities.charAt(i) == "1" ? true : "legendonly";
+    trace.visible = visibilities.charAt(i) == "1" ? true : "legendonly";
   }
 
   // Create the plot
@@ -442,7 +449,9 @@ function buildLegend() {
   plot.data.forEach((trace, idx) => {
     let key = trace.legendgroup !== undefined ? trace.legendgroup : idx;
     let color =
-      plot._fullData[idx].line?.color || plot._fullData[idx].marker?.color || "black";
+      plot._fullData[idx].line?.color ||
+      plot._fullData[idx].marker?.color ||
+      "black";
     if (!groups[key]) {
       groups[key] = {
         name: trace.name,
