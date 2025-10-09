@@ -34,4 +34,4 @@ To build the package, you can use the build script:
 ./build.sh
 ```
 
-Note that there is also code for a python (matplotlib) based package, but performance was poor, which is why I then created the web based frontend.
+Note that there is also code for a python (matplotlib) based frontend, but performance was poor, which is why I then created the web based frontend.
