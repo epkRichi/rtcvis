@@ -566,12 +566,15 @@ function updateConvType(event) {
   redrawPlot();
 }
 
+const resizeObserver = new ResizeObserver((entries) => redrawPlot())
+
 async function main() {
   await initializePyodide();
   initializeRTCVis();
   setupDOM();
   setupPlot();
   redrawPlot();
+  resizeObserver.observe(plot)
 }
 
 main();
