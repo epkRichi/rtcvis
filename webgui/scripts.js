@@ -68,6 +68,41 @@ function katexRender(text, element) {
 }
 
 /**
+ * Computes the ranges for the plot such that the given coordinates are visible.
+ * @param {Number} xmin Minimum x that must be visible.
+ * @param {Number} xmax Maximum x that must be visible.
+ * @param {Number} ymin Minimum y that must be visible.
+ * @param {Number} ymax Maximum y that must be visible.
+ * @returns An object with x and y properties that are the ranges for Plotly.
+ */
+function computePlotRanges(xmin, xmax, ymin, ymax) {
+  const xrange = xmax - xmin;
+  const yrange = ymax - ymin;
+  const aspectRatio = plot.offsetWidth / plot.offsetHeight;
+
+  // Target for y if we keep the xrange
+  const targetY = xrange / aspectRatio;
+  // Target for x if we keep the yrange
+  const targetX = yrange * aspectRatio;
+
+  if (targetY > yrange) {
+    // Not enough vertical space -> pad in y direction
+    const pad = (targetY - yrange) / 2;
+    return {
+      x: [xmin, xmax],
+      y: [ymin - pad, ymax + pad],
+    };
+  } else {
+    // Not enough horizontal space -> pad in x direction
+    const pad = (targetX - xrange) / 2;
+    return {
+      x: [xmin - pad, xmax + pad],
+      y: [ymin, ymax],
+    };
+  }
+}
+
+/**
  * Looks for a parameter in the URL. If the parameter exists,
  * a function will be applied to it to convert it to the desired type.
  * If the parameter doesn't exist, could not be decoded or applying the
@@ -342,6 +377,13 @@ function redrawPlot() {
   );
 
   // Update the plot
+  state.plotRanges = computePlotRanges(
+    state.convProperties.min_x,
+    state.convProperties.max_x,
+    state.convProperties.min_y,
+    state.convProperties.max_y
+  );
+
   let x = [];
   let y = [];
   let names = [];
@@ -380,20 +422,8 @@ function redrawPlot() {
       name: names,
     },
     {
-      xaxis: {
-        autorange: true,
-        autorangeoptions: {
-          include: [state.convProperties.min_x, state.convProperties.max_x],
-        },
-      },
-      yaxis: {
-        autorange: true,
-        autorangeoptions: {
-          include: [state.convProperties.min_y, state.convProperties.max_y],
-        },
-        scaleanchor: "x",
-        scaleratio: 1,
-      },
+      xaxis: { range: state.plotRanges.x },
+      yaxis: { range: state.plotRanges.y },
     },
     updateIndices
   );
